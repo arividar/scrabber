@@ -2,6 +2,7 @@ use win_screenshot::capture::*;
 use std::time::Duration;
 use std::thread;
 use ctrlc;
+use chrono::{Local, DateTime};
 
 fn main() {
     // set up Ctrl-C handling
@@ -13,18 +14,16 @@ fn main() {
         std::process::exit(0);
     }).expect("Error setting Ctrl-C handler");
 
-    let mut i = 0;
     loop {
-        i = i + 1;
         // create a new thread to run the job
-        let handle = thread::spawn(move || {
-            let mut filename = String::from("screenshot");
-            filename.push_str(&i.to_string());
+        let handle = thread::spawn(|| {
+            let now: DateTime<Local> = Local::now();
+            let mut filename = now.format("%Y-%m-%dT%H%M%S").to_string();
+            println!("The current date and time is: {}", &filename);
             filename.push_str(".jpg");
-            println!("**** Writing filename: {}", filename);
             let image = capture_display().unwrap();
-            image.save(filename).unwrap();
-            println!("Running job...{}", i);
+            image.save(&filename).unwrap();
+            println!("**** Wrote filename: {}", &filename);
         });
 
         // sleep for 10 seconds
