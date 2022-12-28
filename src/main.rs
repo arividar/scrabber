@@ -7,18 +7,25 @@ use chrono::{Local, DateTime};
 use clap::{Parser};
 
 #[derive(Parser,Debug)]
-#[command(author, version, about, long_about = None)]
+#[command(name = "WinScreenshot")]
+#[command(author = "Ari Johannesson <arividar@gmail.com>")]
+#[command(version = "0.1")]
+#[command(about = "Periodically captures a screenshot and saves to a file")]
+#[command(long_about = 
+    "Captures a screenshot of the current screen and stores it as jpg-file in the 
+    supplied directory. By default the file is named by the current date and time 
+    like so 2027-06-20_10.06.37.jpg.")]
 struct Cli {
     /// Optional path of a folder where to put the screenshot files
     #[arg(short, long, value_name = "FOLDER")]
     path: Option<PathBuf>,
 
-    /// The filename to save the screenshot to
+    /// Optional filename to save the screenshot to
     #[arg(short, long, value_name = "FILENAME")]
     filename: String,
 
     /// The Interval in seconds between creating a new screenshot
-    #[arg(short, long, action = clap::ArgAction::Count)]
+    #[arg(short, long, value_name = "INTERVAL")]
     interval: u8,
 
 }
