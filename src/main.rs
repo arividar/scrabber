@@ -15,6 +15,8 @@ use clap::{Parser};
     "Captures a screenshot of the current screen and stores it as jpg-file in the 
     supplied directory. By default the file is named by the current date and time 
     like so 2027-06-20_10.06.37.jpg.")]
+
+
 struct Cli {
     /// Optional path of a folder where to put the screenshot files
     #[arg(short, long, value_name = "FOLDER")]
@@ -22,17 +24,15 @@ struct Cli {
 
     /// Optional filename to save the screenshot to
     #[arg(short, long, value_name = "FILENAME")]
-    filename: String,
+    filename: Option<String>,
 
     /// The Interval in seconds between creating a new screenshot
     #[arg(short, long, value_name = "INTERVAL")]
-    interval: u8,
+    interval: Option<u8>,
 
 }
 
 fn main() {
-    let cli = Cli::parse();
-    println!("**** Cli={:?}", cli);
     ctrlc::set_handler(|| {
         // this code will be executed when the user hits Ctrl-C
         println!("Ctrl-C pressed!");
@@ -41,6 +41,7 @@ fn main() {
         std::process::exit(0);
     }).expect("Error setting Ctrl-C handler");
 
+    let cli = Cli::parse();
     loop {
         // create a new thread to run the job
         let handle = thread::spawn(|| {
@@ -58,5 +59,16 @@ fn main() {
 
         // wait for the job to finish
         handle.join().unwrap();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_main_creates_path_parameter_in_cli() {
+        let cli = Cli::parse();
+        assert_eq!(cli.path, None);
     }
 }
