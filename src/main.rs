@@ -41,7 +41,7 @@ fn main() {
         std::process::exit(0);
     }).expect("Error setting Ctrl-C handler");
 
-    let cli = Cli::parse();
+    let _cli = Cli::parse();
     loop {
         // create a new thread to run the job
         let handle = thread::spawn(|| {
