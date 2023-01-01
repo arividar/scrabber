@@ -1,22 +1,25 @@
-use win_screenshot::capture::*;
-use std::time::Duration;
+
+use chrono::{DateTime, Local};
+use clap::Parser;
+use ctrlc;
 use std::path::PathBuf;
 use std::thread;
-use ctrlc;
-use chrono::{Local, DateTime};
-use clap::{Parser};
+use std::time::Duration;
+use win_screenshot::capture::*;
 
-#[derive(Parser,Debug)]
+#[cfg(test)]
+mod winscreenshottests;
+
+#[derive(Parser, Debug)]
 #[command(name = "WinScreenshot")]
 #[command(author = "Ari Johannesson <arividar@gmail.com>")]
 #[command(version = "0.1")]
 #[command(about = "Periodically captures a screenshot and saves to a file")]
-#[command(long_about = 
-    "Captures a screenshot of the current screen and stores it as jpg-file in the 
+#[command(
+    long_about = "Captures a screenshot of the current screen and stores it as jpg-file in the 
     supplied directory. By default the file is named by the current date and time 
-    like so 2027-06-20_10.06.37.jpg.")]
-
-
+    like so 2027-06-20_10.06.37.jpg."
+)]
 struct Cli {
     /// Optional path of a folder where to put the screenshot files
     #[arg(short, long, value_name = "FOLDER")]
@@ -29,7 +32,6 @@ struct Cli {
     /// The Interval in seconds between creating a new screenshot
     #[arg(short, long, value_name = "INTERVAL")]
     interval: Option<u8>,
-
 }
 
 fn main() {
@@ -39,7 +41,8 @@ fn main() {
 
         // exit the program
         std::process::exit(0);
-    }).expect("Error setting Ctrl-C handler");
+    })
+    .expect("Error setting Ctrl-C handler");
 
     let _cli = Cli::parse();
     loop {
@@ -62,13 +65,3 @@ fn main() {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_main_creates_path_parameter_in_cli() {
-        let cli = Cli::parse();
-        assert_eq!(cli.path, None);
-    }
-}
