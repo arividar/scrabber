@@ -6,21 +6,16 @@ use std::thread;
 use std::time::Duration;
 use win_screenshot::capture::*;
 
-#[cfg(test)]
-mod winscreenshottests;
-
 #[derive(Parser, Debug)]
 #[command(name = "winscreenshot")]
-#[command(author = "Ari Johannesson <arividar@gmail.com>")]
-#[command(version = "0.1")]
+#[command(author, version = None)]
 #[command(about = "Periodically captures a screenshot and saves to a file")]
 #[command(
     long_about = "Captures a screenshot of the current screen and stores it as jpg-file in the 
 supplied directory. By default the file is named by the current date and time 
 like so 2027-06-20_10.06.37.jpg."
 )]
-
-struct Cli {
+pub struct Cli {
     /// Optional path of a folder where to put the screenshot files
     #[arg(short, long, value_name = "FOLDER")]
     path: Option<PathBuf>,
@@ -34,7 +29,7 @@ struct Cli {
 
 fn main() {
     let _cli = Cli::parse();
-    println!("CLI er svona: {:?}", _cli);
+    println!("_CLI er svona: {:?}", _cli);
 
     ctrlc::set_handler(|| {
         std::process::exit(0);
@@ -53,5 +48,16 @@ fn main() {
         });
         thread::sleep(Duration::from_secs(10));
         handle.join().unwrap();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn main_creates_path_parameter_in_cli() {
+        let cli = Cli::parse();
+        assert_eq!(cli.path, None);
     }
 }
