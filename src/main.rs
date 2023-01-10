@@ -1,5 +1,6 @@
 use chrono::{DateTime, Local};
 use clap::Parser;
+use log::{ info, warn, debug };
 use ctrlc;
 use std::path::PathBuf;
 use std::thread;
@@ -27,9 +28,12 @@ pub struct Cli {
 }
 
 fn main() {
+    env_logger::init();
+    info!("Starting screen capturing!");
     extract_cli_params();
     enable_ctrl_c_break();
     write_files_until_break();
+    info!("Stopping screen capturing!");
 }
 
 fn extract_cli_params() {
@@ -38,7 +42,7 @@ fn extract_cli_params() {
 
 fn enable_ctrl_c_break() {
     ctrlc::set_handler(|| {
-        println!("**** þú smelltir á Ctrl-C");
+        warn!("**** þú smelltir á Ctrl-C");
         std::process::exit(0);
     })
     .expect("Ctrl-C handler failure.");
@@ -49,11 +53,10 @@ fn write_files_until_break() {
         let handle = thread::spawn(|| {
             let now: DateTime<Local> = Local::now();
             let mut filename = now.format("%Y-%m-%d_%H%M%S").to_string();
-            println!("The current date and time is: {}", &filename);
             filename.push_str(".jpg");
             let image = capture_display().unwrap();
             image.save(&filename).unwrap();
-            println!("**** Wrote filename: {}", &filename);
+            debug!("Saved image {:?}.", filename);
         });
         thread::sleep(Duration::from_secs(10));
         handle.join().unwrap();
