@@ -7,7 +7,6 @@ use std::time::Duration;
 use win_screenshot::capture::*;
 
 #[derive(Parser, Debug)]
-#[command(name = "winscreenshot")]
 #[command(author, version = None)]
 #[command(about = "Periodically captures a screenshot and saves to a file")]
 #[command(
@@ -28,14 +27,24 @@ pub struct Cli {
 }
 
 fn main() {
-    let _cli = Cli::parse();
-    println!("_CLI er svona: {:?}", _cli);
+    extract_cli_params();
+    enable_ctrl_c_break();
+    write_files_until_break();
+}
 
+fn extract_cli_params() {
+    let _cli = Cli::parse();
+}
+
+fn enable_ctrl_c_break() {
     ctrlc::set_handler(|| {
+        println!("**** þú smelltir á Ctrl-C");
         std::process::exit(0);
     })
     .expect("Ctrl-C handler failure.");
+}
 
+fn write_files_until_break() {
     loop {
         let handle = thread::spawn(|| {
             let now: DateTime<Local> = Local::now();
