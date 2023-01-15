@@ -52,7 +52,7 @@ fn write_files_until_break(i: u16) {
     loop {
         let handle = thread::spawn(|| {
             let now: DateTime<Local> = Local::now();
-            let mut filename = now.format("%Y-%m-%dT%H%M%S").to_string();
+            let mut filename = now.format("%Y-%m-%dT%.H%.M%S").to_string();
             filename.push_str(".jpg");
             let image = capture_display().unwrap();
             image.save(&filename).unwrap();
