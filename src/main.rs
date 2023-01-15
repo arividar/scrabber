@@ -1,11 +1,14 @@
 use chrono::{DateTime, Local};
 use clap::Parser;
-use log::{ info, warn, debug };
 use ctrlc;
+use log::{debug, info, warn};
+use std::env;
 use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
 use win_screenshot::capture::*;
+
+const RUST_LOG: &str = "RUST_LOG";
 
 #[derive(Parser, Debug)]
 #[command(author, version = None)]
@@ -24,20 +27,17 @@ pub struct Cli {
     filename: Option<String>,
     /// The Interval in seconds between creating a new screenshot
     #[arg(short, long, value_name = "INTERVAL")]
-    interval: Option<u8>,
+    interval: Option<u16>,
 }
 
 fn main() {
+    set_log_level("debug");
     env_logger::init();
     info!("Starting screen capturing!");
-    extract_cli_params();
+    let cli: Cli = Cli::parse();
     enable_ctrl_c_break();
-    write_files_until_break();
+    write_files_until_break(cli.interval.unwrap());
     info!("Stopping screen capturing!");
-}
-
-fn extract_cli_params() {
-    let _cli = Cli::parse();
 }
 
 fn enable_ctrl_c_break() {
@@ -48,7 +48,7 @@ fn enable_ctrl_c_break() {
     .expect("Ctrl-C handler failure.");
 }
 
-fn write_files_until_break() {
+fn write_files_until_break(i: u16) {
     loop {
         let handle = thread::spawn(|| {
             let now: DateTime<Local> = Local::now();
@@ -58,8 +58,14 @@ fn write_files_until_break() {
             image.save(&filename).unwrap();
             debug!("Saved image {:?}.", filename);
         });
-        thread::sleep(Duration::from_secs(10));
+        thread::sleep(Duration::from_secs(i as u64));
         handle.join().unwrap();
+    }
+}
+
+fn set_log_level(loglevel: &str) {
+    if env::var(RUST_LOG).is_err() {
+        env::set_var(RUST_LOG, loglevel);
     }
 }
 
@@ -71,5 +77,32 @@ mod tests {
     fn main_creates_path_parameter_in_cli() {
         let cli = Cli::parse();
         assert_eq!(cli.path, None);
+    }
+
+    #[test]
+    fn setloglevel_creates_rustlog_env_variable_if_it_doesnt_exist() {
+        env::remove_var(RUST_LOG);
+        assert!(env::var(RUST_LOG).is_err());
+        set_log_level("");
+        assert!(env::var(RUST_LOG).is_ok());
+    }
+
+    #[test]
+    fn setloglevel_does_not_change_rustlog_env_var_if_it_exists() {
+        const EXPECTED: &str = "bingo";
+        env::remove_var(RUST_LOG);
+        env::set_var(RUST_LOG, EXPECTED);
+        assert!(env::var(RUST_LOG).unwrap() == EXPECTED);
+        set_log_level("bongo");
+        assert!(env::var(RUST_LOG).unwrap() == EXPECTED);
+    }
+
+    #[test]
+    fn setloglevel_sets_rust_log_env_variable_to_level() {
+        const EXPECTED: &str = "warning";
+        env::remove_var(RUST_LOG);
+        assert!(env::var(RUST_LOG).is_err());
+        set_log_level(EXPECTED);
+        assert!(env::var(RUST_LOG).unwrap() == EXPECTED);
     }
 }
