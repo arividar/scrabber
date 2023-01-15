@@ -36,7 +36,7 @@ fn main() {
     info!("Starting screen capturing!");
     let cli: Cli = Cli::parse();
     enable_ctrl_c_break();
-    write_files_until_break(cli.interval.unwrap());
+    write_files_until_break(cli.interval.unwrap_or(10));
     info!("Stopping screen capturing!");
 }
 
@@ -52,7 +52,7 @@ fn write_files_until_break(i: u16) {
     loop {
         let handle = thread::spawn(|| {
             let now: DateTime<Local> = Local::now();
-            let mut filename = now.format("%Y-%m-%d_%H%M%S").to_string();
+            let mut filename = now.format("%Y-%m-%dT%H%M%S").to_string();
             filename.push_str(".jpg");
             let image = capture_display().unwrap();
             image.save(&filename).unwrap();
