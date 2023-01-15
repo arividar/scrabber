@@ -1,11 +1,15 @@
 use chrono::{DateTime, Local};
 use clap::Parser;
 use ctrlc;
+use image::{ImageBuffer, Rgb};
 use log::{debug, info, warn};
+use rand;
 use std::env;
 use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
+
+#[cfg(target_os = "windows")]
 use win_screenshot::capture::*;
 
 const RUST_LOG: &str = "RUST_LOG";
@@ -52,15 +56,33 @@ fn write_files_until_break(i: u16) {
     loop {
         let handle = thread::spawn(|| {
             let now: DateTime<Local> = Local::now();
-            let mut filename = now.format("%Y-%m-%dT%.H%.M%S").to_string();
+            let mut filename = now.format("%Y-%m-%dT%H%M%S").to_string();
             filename.push_str(".jpg");
-            let image = capture_display().unwrap();
+            let image = capture_screen();
             image.save(&filename).unwrap();
             debug!("Saved image {:?}.", filename);
         });
         thread::sleep(Duration::from_secs(i as u64));
         handle.join().unwrap();
     }
+}
+
+#[cfg(target_os = "windows")]
+fn capture_screen() -> ImageBuffer<Rgb<u8>, Vec<u8>> {
+    capture_display();
+}
+
+#[cfg(target_os = "macos")]
+fn capture_screen() -> ImageBuffer<Rgb<u8>, Vec<u8>> {
+    let mut img = ImageBuffer::new(800, 600);
+    for (_x, _y, pixel) in img.enumerate_pixels_mut() {
+        *pixel = image::Rgb([
+            rand::random::<u8>(),
+            rand::random::<u8>(),
+            rand::random::<u8>(),
+        ]);
+    }
+    img
 }
 
 fn set_log_level(loglevel: &str) {
