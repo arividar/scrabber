@@ -1,9 +1,7 @@
 use chrono::{DateTime, Local};
 use clap::Parser;
 use ctrlc;
-use image::{ImageBuffer, Rgb};
 use log::{debug, info, warn};
-use rand;
 use std::env;
 use std::path::PathBuf;
 use std::thread;
@@ -11,6 +9,11 @@ use std::time::Duration;
 
 #[cfg(target_os = "windows")]
 use win_screenshot::capture::*;
+
+#[cfg(target_os = "macos")]
+use image::{ImageBuffer, Rgb};
+#[cfg(target_os = "macos")]
+use rand;
 
 const RUST_LOG: &str = "RUST_LOG";
 
@@ -58,7 +61,7 @@ fn write_files_until_break(i: u16) {
             let now: DateTime<Local> = Local::now();
             let mut filename = now.format("%Y-%m-%dT%H%M%S").to_string();
             filename.push_str(".jpg");
-            let image = capture_screen();
+            let image = capture_screen().unwrap();
             image.save(&filename).unwrap();
             debug!("Saved image {:?}.", filename);
         });
@@ -68,8 +71,8 @@ fn write_files_until_break(i: u16) {
 }
 
 #[cfg(target_os = "windows")]
-fn capture_screen() -> ImageBuffer<Rgb<u8>, Vec<u8>> {
-    capture_display();
+fn capture_screen() -> Result<Image, WSError> {
+    capture_display()
 }
 
 #[cfg(target_os = "macos")]
