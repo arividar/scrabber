@@ -10,8 +10,8 @@ use std::time::Duration;
 #[cfg(target_os = "windows")]
 use win_screenshot::capture::*;
 
-#[cfg(target_os = "macos")]
-use image::{ImageBuffer, Rgb};
+use image::error::ImageError;
+use image::{ImageBuffer, Rgba};
 #[cfg(target_os = "macos")]
 use rand;
 
@@ -76,16 +76,17 @@ fn capture_screen() -> Result<Image, WSError> {
 }
 
 #[cfg(target_os = "macos")]
-fn capture_screen() -> ImageBuffer<Rgb<u8>, Vec<u8>> {
+fn capture_screen() -> Result<ImageBuffer<Rgba<u8>, Vec<u8>>, ImageError> {
     let mut img = ImageBuffer::new(800, 600);
     for (_x, _y, pixel) in img.enumerate_pixels_mut() {
-        *pixel = image::Rgb([
+        *pixel = image::Rgba([
             rand::random::<u8>(),
             rand::random::<u8>(),
             rand::random::<u8>(),
+            127,
         ]);
     }
-    img
+    return Ok(img);
 }
 
 fn set_log_level(loglevel: &str) {
