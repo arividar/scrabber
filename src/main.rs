@@ -12,7 +12,7 @@ use std::time::Duration;
 use win_screenshot::capture::*;
 
 #[cfg(target_os = "macos")]
-use image::{ImageBuffer, Rgba};
+use image::{ImageBuffer, ImageError, Rgba};
 
 #[cfg(target_os = "macos")]
 use rand;
