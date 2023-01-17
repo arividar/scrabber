@@ -1,7 +1,8 @@
+#[allow(dead_code)]
 use chrono::{DateTime, Local};
 use clap::Parser;
 use ctrlc;
-use log::{debug, info, warn};
+use log::{debug, info};
 use std::env;
 use std::path::PathBuf;
 use std::thread;
@@ -10,8 +11,9 @@ use std::time::Duration;
 #[cfg(target_os = "windows")]
 use win_screenshot::capture::*;
 
-use image::error::ImageError;
+#[cfg(target_os = "macos")]
 use image::{ImageBuffer, Rgba};
+
 #[cfg(target_os = "macos")]
 use rand;
 
@@ -49,7 +51,7 @@ fn main() {
 
 fn enable_ctrl_c_break() {
     ctrlc::set_handler(|| {
-        warn!("**** þú smelltir á Ctrl-C");
+        info!("Capturing stopped by Ctrl-C");
         std::process::exit(0);
     })
     .expect("Ctrl-C handler failure.");
