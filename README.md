@@ -9,7 +9,7 @@ Captures a screenshot of the current screen and stores it as jpg-file in the sup
 ```
 winscreenshot
 ```
-Creates a screenshot file in the format 2024-06-20_10.06.37.jpg in the current directory.
+Creates a screenshot file in the format 2024-06-20T10.06.37.jpg in the current directory.
 ```
 winscreenshot C:\MyStuff\Screenshots
 ```
