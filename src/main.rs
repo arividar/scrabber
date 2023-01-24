@@ -18,6 +18,7 @@ use image::{ImageBuffer, ImageError, Rgba};
 use rand;
 
 const RUST_LOG: &str = "RUST_LOG";
+const DEFAULT_INTERVAL: u16 = 10;
 
 #[derive(Parser, Debug)]
 #[command(author, version = None)]
@@ -29,12 +30,9 @@ like so 2027-06-20_10.06.37.jpg."
 )]
 pub struct Cli {
     /// Optional path of a folder where to put the screenshot files
-    #[arg(short, long, value_name = "FOLDER")]
+    #[arg(short, long, value_name = "PATH")]
     path: Option<PathBuf>,
     /// Optional filename to save the screenshot to
-    #[arg(short, long, value_name = "FILENAME")]
-    filename: Option<String>,
-    /// The Interval in seconds between creating a new screenshot
     #[arg(short, long, value_name = "INTERVAL")]
     interval: Option<u16>,
 }
@@ -43,13 +41,24 @@ fn main() {
     set_log_level("debug");
     env_logger::init();
     info!("Starting screen capturing!");
-    let cli: Cli = Cli::parse();
-    enable_ctrl_c_break();
-    write_files_until_break(cli.interval.unwrap_or(10));
+
+    let mut interval: u16 = DEFAULT_INTERVAL;
+    let mut path: PathBuf = PathBuf::from("");
+
+    parse_cli_params(&mut interval, &mut path);
+    enable_ctrl_break();
+    write_files_until_break(interval);
+
     info!("Stopping screen capturing!");
 }
 
-fn enable_ctrl_c_break() {
+fn parse_cli_params(interval: &mut u16, path: &mut PathBuf) {
+    let cli: Cli = Cli::parse();
+    *interval = cli.interval.unwrap_or(DEFAULT_INTERVAL);
+    *path = PathBuf::from("Bongo");
+}
+
+fn enable_ctrl_break() {
     ctrlc::set_handler(|| {
         info!("Capturing stopped by Ctrl-C");
         std::process::exit(0);
