@@ -63,8 +63,10 @@ fn enable_ctrl_break() {
 fn parse_cli_params(interval: &mut u16, path: &mut PathBuf) {
     let cli: Cli = Cli::parse();
     *interval = cli.interval.unwrap_or(DEFAULT_INTERVAL);
-    *path = PathBuf::from(cli.path.unwrap_or(PathBuf::from("")));
-    debug!("Path is: {:?}", path);
+    *path = PathBuf::from(cli.path.unwrap_or(PathBuf::from(r".\bingo")));
+    debug!("Path is: {:?}", &path);
+    let full_path = std::fs::canonicalize(path).unwrap();
+    debug!("Full path is: {:?}", &full_path);
 }
 
 fn write_files_until_break(i: u16) {
