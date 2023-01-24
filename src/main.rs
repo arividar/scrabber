@@ -52,18 +52,19 @@ fn main() {
     info!("Stopping screen capturing!");
 }
 
-fn parse_cli_params(interval: &mut u16, path: &mut PathBuf) {
-    let cli: Cli = Cli::parse();
-    *interval = cli.interval.unwrap_or(DEFAULT_INTERVAL);
-    *path = PathBuf::from("Bongo");
-}
-
 fn enable_ctrl_break() {
     ctrlc::set_handler(|| {
         info!("Capturing stopped by Ctrl-C");
         std::process::exit(0);
     })
     .expect("Ctrl-C handler failure.");
+}
+
+fn parse_cli_params(interval: &mut u16, path: &mut PathBuf) {
+    let cli: Cli = Cli::parse();
+    *interval = cli.interval.unwrap_or(DEFAULT_INTERVAL);
+    *path = PathBuf::from(cli.path.unwrap_or(PathBuf::from("")));
+    debug!("Path is: {:?}", path);
 }
 
 fn write_files_until_break(i: u16) {
