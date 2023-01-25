@@ -4,7 +4,7 @@ use clap::Parser;
 use ctrlc;
 use log::{debug, info};
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
 
@@ -31,7 +31,7 @@ like so 2027-06-20_10.06.37.jpg."
 pub struct Cli {
     /// Optional path of a folder where to put the screenshot files
     #[arg(short, long, value_name = "PATH")]
-    path: Option<PathBuf>,
+    path: Option<String>,
     /// Optional filename to save the screenshot to
     #[arg(short, long, value_name = "INTERVAL")]
     interval: Option<u16>,
@@ -63,7 +63,8 @@ fn enable_ctrl_break() {
 fn parse_cli_params(interval: &mut u16, path: &mut PathBuf) {
     let cli: Cli = Cli::parse();
     *interval = cli.interval.unwrap_or(DEFAULT_INTERVAL);
-    *path = PathBuf::from(cli.path.unwrap_or(PathBuf::from(r".\bingo")));
+    *path = PathBuf::from(cli.path.unwrap_or(String::from(r".\bingo")));
+    // let path_str: String = cli.path.unwrap_or(String::from(r".\bingo"));
     debug!("Path is: {:?}", &path);
     let full_path = std::fs::canonicalize(path).unwrap();
     debug!("Full path is: {:?}", &full_path);
