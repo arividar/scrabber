@@ -5,7 +5,7 @@ use clap::Parser;
 use ctrlc;
 use log::{debug, info};
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
 
