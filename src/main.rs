@@ -1,3 +1,4 @@
+#![feature(absolute_path)]
 #[allow(dead_code)]
 use chrono::{DateTime, Local};
 use clap::Parser;
@@ -66,7 +67,8 @@ fn parse_cli_params(interval: &mut u16, path: &mut PathBuf) {
     *path = PathBuf::from(cli.path.unwrap_or(String::from(r".\bingo")));
     // let path_str: String = cli.path.unwrap_or(String::from(r".\bingo"));
     debug!("Path is: {:?}", &path);
-    let full_path = std::fs::canonicalize(path).unwrap();
+    // let full_path = std::fs::canonicalize(path).unwrap();
+    let full_path = std::path::absolute(path).unwrap();
     debug!("Full path is: {:?}", &full_path);
 }
 

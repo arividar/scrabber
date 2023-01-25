@@ -1,3 +1,5 @@
+# cargo-features = ["absolute-path"]
+
 [package]
 name = "winscreenshot"
 version = "0.1.0"
