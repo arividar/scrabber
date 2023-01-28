@@ -5,6 +5,7 @@ use clap::Parser;
 use ctrlc;
 use log::{debug, info};
 use std::env;
+use std::fs;
 use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
@@ -46,9 +47,9 @@ fn main() {
     let mut interval: u16 = DEFAULT_INTERVAL;
     let mut path: PathBuf = PathBuf::from("");
 
-    parse_cli_params(&mut interval, &mut path);
+    parse_cli_params(&mut path, &mut interval);
     enable_ctrl_break();
-    write_files_until_break(interval);
+    write_files_until_break(&path, &interval);
 
     info!("Stopping screen capturing!");
 }
@@ -61,28 +62,30 @@ fn enable_ctrl_break() {
     .expect("Ctrl-C handler failure.");
 }
 
-fn parse_cli_params(interval: &mut u16, path: &mut PathBuf) {
+fn parse_cli_params(path: &mut PathBuf, interval: &mut u16) {
     let cli: Cli = Cli::parse();
     *interval = cli.interval.unwrap_or(DEFAULT_INTERVAL);
-    *path = PathBuf::from(cli.path.unwrap_or(String::from(r".\bingo")));
-    // let path_str: String = cli.path.unwrap_or(String::from(r".\bingo"));
+    *path = std::path::absolute(PathBuf::from(cli.path.unwrap_or(String::from(".")))).unwrap();
     debug!("Path is: {:?}", &path);
-    // let full_path = std::fs::canonicalize(path).unwrap();
-    let full_path = std::path::absolute(path).unwrap();
-    debug!("Full path is: {:?}", &full_path);
 }
 
-fn write_files_until_break(i: u16) {
+fn write_files_until_break(path: &PathBuf, i: &u16) {
+    if !std::path::Path::new(path).exists() {
+        fs::create_dir_all(path).expect("Failed to create directory.");
+    }
     loop {
-        let handle = thread::spawn(|| {
-            let now: DateTime<Local> = Local::now();
-            let mut filename = now.format("%Y-%m-%dT%H.%M.%S").to_string();
-            filename.push_str(".jpg");
+        let bp = path.clone();
+        let handle = thread::spawn(move || {
+            let filename: String = Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".jpg";
+            debug!("bp is {:?}.", &bp);
+            let fullpath = bp.join(&filename);
+            debug!("fullpath is {:?}.", &fullpath);
+
             let image = capture_screen().unwrap();
-            image.save(&filename).unwrap();
-            debug!("Saved image {:?}.", filename);
+            image.save(&fullpath).unwrap();
+            debug!("Saved image {:?}.", &fullpath);
         });
-        thread::sleep(Duration::from_secs(i as u64));
+        thread::sleep(Duration::from_secs(*i as u64));
         handle.join().unwrap();
     }
 }
