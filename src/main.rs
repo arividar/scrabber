@@ -1,9 +1,9 @@
 #![feature(absolute_path)]
 #[allow(dead_code)]
-use chrono::{DateTime, Local};
+use chrono::Local;
 use clap::Parser;
 use ctrlc;
-use log::{debug, info};
+use log::info;
 use std::env;
 use std::fs;
 use std::path::PathBuf;
@@ -66,7 +66,6 @@ fn parse_cli_params(path: &mut PathBuf, interval: &mut u16) {
     let cli: Cli = Cli::parse();
     *interval = cli.interval.unwrap_or(DEFAULT_INTERVAL);
     *path = std::path::absolute(PathBuf::from(cli.path.unwrap_or(String::from(".")))).unwrap();
-    debug!("Path is: {:?}", &path);
 }
 
 fn write_files_until_break(path: &PathBuf, i: &u16) {
@@ -77,13 +76,10 @@ fn write_files_until_break(path: &PathBuf, i: &u16) {
         let bp = path.clone();
         let handle = thread::spawn(move || {
             let filename: String = Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".jpg";
-            debug!("bp is {:?}.", &bp);
             let fullpath = bp.join(&filename);
-            debug!("fullpath is {:?}.", &fullpath);
-
             let image = capture_screen().unwrap();
             image.save(&fullpath).unwrap();
-            debug!("Saved image {:?}.", &fullpath);
+            info!("Saved screenshot {}", &fullpath.display());
         });
         thread::sleep(Duration::from_secs(*i as u64));
         handle.join().unwrap();
