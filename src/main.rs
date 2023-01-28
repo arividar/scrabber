@@ -72,15 +72,13 @@ fn write_files_until_break(path: &PathBuf, interval: &u16) {
     if !std::path::Path::new(path).exists() {
         fs::create_dir_all(path).expect("Failed to create directory.");
     }
-    let bp = path.clone();
-    let i = interval.clone();
     loop {
         let filename: String = Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".jpg";
-        let fullpath = bp.join(&filename);
+        let fullpath = path.join(&filename);
         let image = capture_screen().unwrap();
         image.save(&fullpath).unwrap();
         info!("Saved screenshot {}", &fullpath.display());
-        thread::sleep(Duration::from_secs(i as u64));
+        thread::sleep(Duration::from_secs(*interval as u64));
     }
 }
 
