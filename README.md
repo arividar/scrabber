@@ -16,16 +16,16 @@ winscreenshot C:\MyStuff\Screenshots
 ```
 Creates a screenshot file C:\MyStuff\Screenshots\2024-06-20T10.06.37.jpg
 ```
-winscreenshot -FolderPath /Screenshots -Filename screenshot10
+winscreenshot -Path /Screenshots -Filename screenshot10
 ```
 Creates a screenshot file /Screenshots/screenshot10.jpg
 ```
-winscreenshot -FolderPath /Screenshots -Interval 600 -Times 10
+winscreenshot -Path /Screenshots -Interval 600 -Times 10
 ```
 Creates screenshot every 10 minutes in /Screenshots as 2024-06-20T10.06.37.jpg,
 2024-06-20T20.06.37.jpg, 024-06-30T10.06.37.jpg etc.
 
 ```
-winscreenshot -FolderPath /Screenshots -Interval 60 -Forever
+winscreenshot -Path /Screenshots -Interval 60 -Forever
 ```
 Creates screenshot, one every minute in /Screenshots forever.
