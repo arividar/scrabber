@@ -69,12 +69,14 @@ fn parse_cli_params(path: &mut PathBuf, interval: &mut u16) {
 }
 
 fn write_files_until_break(path: &PathBuf, interval: &u16) {
-    if !std::path::Path::new(path).exists() {
-        fs::create_dir_all(path).expect("Failed to create directory.");
-    }
+    let mut daypath: PathBuf;
     loop {
+        daypath = path.join(Local::now().format("%Y-%m-%d").to_string());
+        if !std::path::Path::new(&daypath).exists() {
+            fs::create_dir_all(&daypath).expect("Failed to create directory.");
+        }
         let filename: String = Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".jpg";
-        let fullpath = path.join(&filename);
+        let fullpath = daypath.join(&filename);
         let image = capture_screen().unwrap();
         image.save(&fullpath).unwrap();
         info!("Saved screenshot {}", &fullpath.display());
