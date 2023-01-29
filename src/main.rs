@@ -34,7 +34,7 @@ pub struct Cli {
     /// Optional path of a folder where to put the screenshot files
     #[arg(short, long, value_name = "PATH")]
     path: Option<String>,
-    /// Optional filename to save the screenshot to
+    /// Optional interval in seconds between creating a new screenshot
     #[arg(short, long, value_name = "INTERVAL")]
     interval: Option<u16>,
 }
