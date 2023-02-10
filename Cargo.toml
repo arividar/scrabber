@@ -1,5 +1,5 @@
 [package]
-name = "winscreenshot"
+name = "scrabber"
 version = "0.1.0"
 edition = "2021"
 authors = ["Ari Vidar Johannesson <arividar@gmail.com>"]
