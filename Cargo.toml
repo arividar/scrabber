@@ -15,5 +15,3 @@ rand = "0.8"
 fs = "0.0"
 screenshots = { git = "https://github.com/nashaofu/screenshots-rs.git", branch = "dev" }
 
-[target.'cfg(windows)'.dependencies]
-win-screenshot = "2.0"

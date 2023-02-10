@@ -14,9 +14,6 @@ use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
 
-#[cfg(target_os = "windows")]
-use win_screenshot::capture::*;
-
 const RUST_LOG: &str = "RUST_LOG";
 const DEFAULT_INTERVAL: u16 = 10;
 
@@ -24,9 +21,9 @@ const DEFAULT_INTERVAL: u16 = 10;
 #[command(author, version = None)]
 #[command(about = "Periodically captures a screenshot and saves to a file")]
 #[command(
-    long_about = "Captures a screenshot of the current screen and stores it as jpg-file in the 
+    long_about = "Captures a screenshot of the current screen and stores it as png-file in the 
 supplied directory. By default the file is named by the current date and time 
-like so 2027-06-20_10.06.37.jpg."
+like so 2027-06-20_10.06.37.png."
 )]
 pub struct Cli {
     /// Optional path of a folder where to put the screenshot files
@@ -73,22 +70,16 @@ fn write_files_until_break(path: &PathBuf, interval: &u16) {
         if !std::path::Path::new(&daypath).exists() {
             fs::create_dir_all(&daypath).expect("Failed to create directory.");
         }
-        let filename: String = Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".jpg";
+        let filename: String = Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png";
         let fullpath = daypath.join(&filename);
         let image = capture_screen().unwrap();
         let mut file = File::create(&fullpath).unwrap();
         file.write_all(image.buffer()).unwrap();
-        // image.save(&fullpath).unwrap();
         info!("Saved screenshot {}", &fullpath.display());
         thread::sleep(Duration::from_secs(*interval as u64));
     }
 }
 
-// #[cfg(target_os = "windows")]
-// fn capture_screen() -> Result<Image, WSError> {
-//     capture_display()
-// }
-//
 fn capture_screen() -> Result<Image, ImageError> {
     let di = DisplayInfo::from_point(0, 0).unwrap();
     let screen = Screen::new(&di);
