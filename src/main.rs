@@ -3,21 +3,19 @@
 use chrono::Local;
 use clap::Parser;
 use ctrlc;
+use image::ImageError;
 use log::info;
+use screenshots::{DisplayInfo, Image, Screen};
 use std::env;
 use std::fs;
+use std::fs::File;
+use std::io::Write;
 use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
 
 #[cfg(target_os = "windows")]
 use win_screenshot::capture::*;
-
-#[cfg(target_os = "macos")]
-use image::{ImageBuffer, ImageError, Rgba};
-
-#[cfg(target_os = "macos")]
-use rand;
 
 const RUST_LOG: &str = "RUST_LOG";
 const DEFAULT_INTERVAL: u16 = 10;
@@ -78,29 +76,25 @@ fn write_files_until_break(path: &PathBuf, interval: &u16) {
         let filename: String = Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".jpg";
         let fullpath = daypath.join(&filename);
         let image = capture_screen().unwrap();
-        image.save(&fullpath).unwrap();
+        let mut file = File::create(&fullpath).unwrap();
+        file.write_all(image.buffer()).unwrap();
+        // image.save(&fullpath).unwrap();
         info!("Saved screenshot {}", &fullpath.display());
         thread::sleep(Duration::from_secs(*interval as u64));
     }
 }
 
-#[cfg(target_os = "windows")]
-fn capture_screen() -> Result<Image, WSError> {
-    capture_display()
-}
-
-#[cfg(target_os = "macos")]
-fn capture_screen() -> Result<ImageBuffer<Rgba<u8>, Vec<u8>>, ImageError> {
-    let mut img = ImageBuffer::new(800, 600);
-    for (_x, _y, pixel) in img.enumerate_pixels_mut() {
-        *pixel = image::Rgba([
-            rand::random::<u8>(),
-            rand::random::<u8>(),
-            rand::random::<u8>(),
-            127,
-        ]);
-    }
-    return Ok(img);
+// #[cfg(target_os = "windows")]
+// fn capture_screen() -> Result<Image, WSError> {
+//     capture_display()
+// }
+//
+fn capture_screen() -> Result<Image, ImageError> {
+    let di = DisplayInfo::from_point(0, 0).unwrap();
+    let screen = Screen::new(&di);
+    println!("capturer {:?}", screen);
+    let image = screen.capture().unwrap();
+    return Ok(image);
 }
 
 fn set_log_level(loglevel: &str) {
