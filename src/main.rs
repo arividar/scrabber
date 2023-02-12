@@ -1,5 +1,4 @@
-#![feature(absolute_path)]
-#[allow(dead_code)]
+#![feature(absolute_path)] #[allow(dead_code)]
 use chrono::Local;
 use clap::Parser;
 use ctrlc;
@@ -14,6 +13,7 @@ use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
 
+const FOREVER: u32 = std::u32::MAX;
 const RUST_LOG: &str = "RUST_LOG";
 const DEFAULT_INTERVAL: u16 = 10;
 
@@ -29,9 +29,15 @@ pub struct Cli {
     /// Optional path of a folder where to put the screenshot files
     #[arg(short, long, value_name = "PATH")]
     path: Option<String>,
+
     /// Optional interval in seconds between creating a new screenshot
-    #[arg(short, long, value_name = "INTERVAL")]
+    #[arg(short, long, value_name = "NUMBER")]
     interval: Option<u16>,
+
+    /// Specifies how many times to create a screenshots, waiting -Interval 
+    /// seconds between each. 
+    #[arg(short, long, value_name = "NUMBER")]
+    count: Option<u32>,
 }
 
 fn main() {
@@ -40,11 +46,12 @@ fn main() {
     info!("Starting screen capturing!");
 
     let mut interval: u16 = DEFAULT_INTERVAL;
+    let mut count: u32 = FOREVER;
     let mut path: PathBuf = PathBuf::from("");
 
-    parse_cli_params(&mut path, &mut interval);
+    parse_cli_params(&mut path, &mut interval, &mut count);
     enable_ctrl_break();
-    write_files_until_break(&path, &interval);
+    write_files_until_break(&path, &interval, &count);
 
     info!("Stopping screen capturing!");
 }
@@ -57,14 +64,16 @@ fn enable_ctrl_break() {
     .expect("Ctrl-C handler failure.");
 }
 
-fn parse_cli_params(path: &mut PathBuf, interval: &mut u16) {
+fn parse_cli_params(path: &mut PathBuf, interval: &mut u16, count: &mut u32) {
     let cli: Cli = Cli::parse();
-    *interval = cli.interval.unwrap_or(DEFAULT_INTERVAL);
     *path = std::path::absolute(PathBuf::from(cli.path.unwrap_or(String::from(".")))).unwrap();
+    *interval = cli.interval.unwrap_or(DEFAULT_INTERVAL);
+    *count = cli.count.unwrap_or(FOREVER);
 }
 
-fn write_files_until_break(path: &PathBuf, interval: &u16) {
+fn write_files_until_break(path: &PathBuf, interval: &u16, count: &u32) {
     let mut daypath: PathBuf;
+    let mut times_left = *count;
     loop {
         daypath = path.join(Local::now().format("%Y-%m-%d").to_string());
         if !std::path::Path::new(&daypath).exists() {
@@ -76,6 +85,12 @@ fn write_files_until_break(path: &PathBuf, interval: &u16) {
         let mut file = File::create(&fullpath).unwrap();
         file.write_all(image.buffer()).unwrap();
         info!("Saved screenshot {}", &fullpath.display());
+        if *count != FOREVER {
+            times_left = times_left - 1;
+        }
+        if times_left == 0 {
+            break;
+        }
         thread::sleep(Duration::from_secs(*interval as u64));
     }
 }
@@ -95,7 +110,7 @@ fn set_log_level(loglevel: &str) {
 }
 
 #[cfg(test)]
-mod tests {
+mod unit_tests {
     use super::*;
 
     #[test]
@@ -129,5 +144,15 @@ mod tests {
         assert!(env::var(RUST_LOG).is_err());
         set_log_level(EXPECTED);
         assert!(env::var(RUST_LOG).unwrap() == EXPECTED);
+    }
+}
+
+
+#[cfg(test)]
+mod integration_tests {
+    use super::*;
+    #[test]
+    fn tbd() {
+        assert!(true);
     }
 }
