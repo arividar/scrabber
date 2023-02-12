@@ -85,7 +85,7 @@ fn write_files_until_break(path: &PathBuf, interval: &u16, count: &u32) {
         file.write_all(image.buffer()).unwrap();
         info!("Saved screenshot {}", &fullpath.display());
         if *count != FOREVER {
-            times_left = times_left - 1;
+            times_left -= 1;
         }
         if times_left == 0 {
             break;
