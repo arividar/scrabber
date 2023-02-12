@@ -34,8 +34,7 @@ pub struct Cli {
     #[arg(short, long, value_name = "NUMBER")]
     interval: Option<u16>,
 
-    /// Specifies how many times to create a screenshots, waiting -Interval 
-    /// seconds between each. 
+    /// Optional count of how many screenshots to take 
     #[arg(short, long, value_name = "NUMBER")]
     count: Option<u32>,
 }
