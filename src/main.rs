@@ -81,14 +81,15 @@ fn write_files_until_break(path: &PathBuf, interval: &u16, count: &u32) {
         let filename: String = Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png";
         let fullpath = daypath.join(&filename);
         let image = capture_screen().unwrap();
+
         let mut file = File::create(&fullpath).unwrap();
         file.write_all(image.buffer()).unwrap();
         info!("Saved screenshot {}", &fullpath.display());
         if *count != FOREVER {
             times_left -= 1;
-        }
-        if times_left == 0 {
-            break;
+            if times_left < 1 {
+                break;
+            }
         }
         thread::sleep(Duration::from_secs(*interval as u64));
     }
