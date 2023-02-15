@@ -12,6 +12,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
+use thread::spawn;
 
 const FOREVER: u32 = std::u32::MAX;
 const RUST_LOG: &str = "RUST_LOG";
@@ -80,7 +81,7 @@ fn write_files_until_break(path: &PathBuf, interval: &u16, count: &u32) {
         }
         let filename: String = Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png";
         let fullpath = daypath.join(&filename);
-        save_screenshot(&fullpath);
+        let _handle = thread::spawn(move || save_screenshot(&fullpath));
         if *count != FOREVER {
             times_left -= 1;
             if times_left < 1 {
