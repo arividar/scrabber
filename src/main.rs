@@ -74,7 +74,8 @@ fn write_files_until_break(path: &PathBuf, interval: &u16, count: &u32) {
     let mut times_left = *count;
     loop {
         let full_path = create_timed_file_full_path(&path);
-        let _handle = thread::spawn(move || save_screenshot(&full_path));
+        //let _handle = thread::spawn(move || save_screenshot(&full_path));
+        save_screenshot(&full_path);
         if *count != FOREVER {
             times_left -= 1;
             if times_left < 1 {
