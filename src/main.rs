@@ -12,7 +12,6 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
-use thread::spawn;
 
 const FOREVER: u32 = std::u32::MAX;
 const RUST_LOG: &str = "RUST_LOG";
@@ -72,16 +71,10 @@ fn parse_cli_params(path: &mut PathBuf, interval: &mut u16, count: &mut u32) {
 }
 
 fn write_files_until_break(path: &PathBuf, interval: &u16, count: &u32) {
-    let mut daypath: PathBuf;
     let mut times_left = *count;
     loop {
-        daypath = path.join(Local::now().format("%Y-%m-%d").to_string());
-        if !std::path::Path::new(&daypath).exists() {
-            fs::create_dir_all(&daypath).expect("Failed to create directory.");
-        }
-        let filename: String = Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png";
-        let fullpath = daypath.join(&filename);
-        let _handle = thread::spawn(move || save_screenshot(&fullpath));
+        let full_path = create_timed_file_full_path(&path);
+        let _handle = thread::spawn(move || save_screenshot(&full_path));
         if *count != FOREVER {
             times_left -= 1;
             if times_left < 1 {
@@ -90,6 +83,13 @@ fn write_files_until_break(path: &PathBuf, interval: &u16, count: &u32) {
         }
         thread::sleep(Duration::from_secs(*interval as u64));
     }
+}
+
+fn create_timed_file_full_path(path: &PathBuf) -> PathBuf {
+    let daypath: PathBuf = path.join(Local::now().format("%Y-%m-%d").to_string());
+    fs::create_dir_all(&daypath).expect("Failed to create directory.");
+    let filename: String = Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png";
+    daypath.join(&filename)
 }
 
 fn save_screenshot(filename: &PathBuf) {
