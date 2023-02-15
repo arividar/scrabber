@@ -3,7 +3,7 @@ use chrono::Local;
 use clap::Parser;
 use ctrlc;
 use image::ImageError;
-use log::info;
+use log::{debug,info};
 use screenshots::{DisplayInfo, Image, Screen};
 use std::env;
 use std::fs;
@@ -40,9 +40,9 @@ pub struct Cli {
 }
 
 fn main() {
-    set_log_level("debug");
+    set_log_level("info");
     env_logger::init();
-    info!("Starting screen capturing!");
+    debug!("Starting screen capturing!");
 
     let mut interval: u16 = DEFAULT_INTERVAL;
     let mut count: u32 = FOREVER;
@@ -52,7 +52,7 @@ fn main() {
     enable_ctrl_break();
     write_files_until_break(&path, &interval, &count);
 
-    info!("Stopping screen capturing!");
+    debug!("Stopping screen capturing!");
 }
 
 fn enable_ctrl_break() {
@@ -98,7 +98,7 @@ fn write_files_until_break(path: &PathBuf, interval: &u16, count: &u32) {
 fn capture_screen() -> Result<Image, ImageError> {
     let di = DisplayInfo::from_point(0, 0).unwrap();
     let screen = Screen::new(&di);
-    println!("capturer {:?}", screen);
+    debug!("capturer {:?}", screen);
     let image = screen.capture().unwrap();
     return Ok(image);
 }
