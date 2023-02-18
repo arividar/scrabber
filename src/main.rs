@@ -16,12 +16,13 @@ use std::time::Duration;
 const FOREVER: u32 = std::u32::MAX;
 const RUST_LOG: &str = "RUST_LOG";
 const DEFAULT_INTERVAL: u16 = 10;
+const DEFAULT_COUNT: u32 = 1;
 
 #[derive(Parser, Debug)]
 #[command(author, version = None)]
 #[command(about = "Periodically captures a screenshot and saves to a file")]
 #[command(
-    long_about = "Captures a screenshot of the current screen and stores it as png-file in the 
+    long_about = "Captures a screenshot saves them to png-files in the 
 supplied directory. By default the file is named by the current date and time 
 like so 2027-06-20_10.06.37.png."
 )]
@@ -37,6 +38,11 @@ pub struct Cli {
     /// Optional count of how many screenshots to take 
     #[arg(short, long, value_name = "NUMBER")]
     count: Option<u32>,
+
+    /// If set the screen capture will run continuously until stopped 
+    /// with Ctrl-C.  Overrides the count parameter.
+    #[arg(short, long, action)]
+    forever: bool,
 }
 
 fn main() {
@@ -47,10 +53,11 @@ fn main() {
     let mut interval: u16 = DEFAULT_INTERVAL;
     let mut count: u32 = FOREVER;
     let mut path: PathBuf = PathBuf::from("");
+    let mut forever: bool = false;
 
-    parse_cli_params(&mut path, &mut interval, &mut count);
+    parse_cli_params(&mut path, &mut interval, &mut count, &mut forever);
     enable_ctrl_break();
-    write_files_until_break(&path, &interval, &count);
+    write_screenshots(&path, &interval, &count, &forever);
 
     debug!("Stopping screen capturing!");
 }
@@ -63,20 +70,21 @@ fn enable_ctrl_break() {
     .expect("Ctrl-C handler failure.");
 }
 
-fn parse_cli_params(path: &mut PathBuf, interval: &mut u16, count: &mut u32) {
+fn parse_cli_params(path: &mut PathBuf, interval: &mut u16, count: &mut u32, forever: &mut bool) {
     let cli: Cli = Cli::parse();
     *path = std::path::absolute(PathBuf::from(cli.path.unwrap_or(String::from(".")))).unwrap();
     *interval = cli.interval.unwrap_or(DEFAULT_INTERVAL);
-    *count = cli.count.unwrap_or(FOREVER);
+    *count = cli.count.unwrap_or(DEFAULT_COUNT);
+    *forever = cli.forever;
 }
 
-fn write_files_until_break(path: &PathBuf, interval: &u16, count: &u32) {
+fn write_screenshots(path: &PathBuf, interval: &u16, count: &u32, forever: &bool) {
     let mut times_left = *count;
     loop {
         let full_path = create_timed_file_full_path(&path);
         //let _handle = thread::spawn(move || save_screenshot(&full_path));
         save_screenshot(&full_path);
-        if *count != FOREVER {
+        if !*forever {
             times_left -= 1;
             if times_left < 1 {
                 break;
