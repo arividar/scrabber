@@ -8,9 +8,12 @@ authors = ["Ari Vidar Johannesson <arividar@gmail.com>"]
 image = "0.24"
 ctrlc = "3.2"
 chrono = "0.4"
-clap = {version="4.0", features=["derive"]}
+clap = { version = "4.0", features = ["derive"] }
 env_logger = "0.10.0"
 log = "0.4.17"
 rand = "0.8"
 fs = "0.0"
 screenshots = { git = "https://github.com/nashaofu/screenshots-rs.git" }
+
+[dev-dependencies]
+tempdir = "0.3"

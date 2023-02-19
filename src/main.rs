@@ -1,9 +1,10 @@
-#![feature(absolute_path)] #[allow(dead_code)]
+#![feature(absolute_path)]
+#[allow(dead_code)]
 use chrono::Local;
 use clap::Parser;
 use ctrlc;
 use image::ImageError;
-use log::{debug,info};
+use log::{debug, info};
 use screenshots::{DisplayInfo, Image, Screen};
 use std::env;
 use std::fs;
@@ -12,8 +13,9 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
+#[cfg(test)]
+use tempdir::TempDir;
 
-const FOREVER: u32 = std::u32::MAX;
 const RUST_LOG: &str = "RUST_LOG";
 const DEFAULT_INTERVAL: u16 = 10;
 const DEFAULT_COUNT: u32 = 1;
@@ -22,25 +24,23 @@ const DEFAULT_COUNT: u32 = 1;
 #[command(author, version = None)]
 #[command(about = "Periodically captures a screenshot and saves to a file")]
 #[command(
-    long_about = "Captures a screenshot saves them to png-files in the 
-supplied directory. By default the file is named by the current date and time 
-like so 2027-06-20_10.06.37.png."
+    long_about = "Scrabber captures a screenshot and saves them to png-files in the supplied 
+directory. By default the file is named by the current date and time like 
+so 2027-06-20_10.06.37.png."
 )]
+
 pub struct Cli {
     /// Optional path of a folder where to put the screenshot files
     #[arg(short, long, value_name = "PATH")]
     path: Option<String>,
-
     /// Optional interval in seconds between creating a new screenshot
     #[arg(short, long, value_name = "NUMBER")]
     interval: Option<u16>,
-
-    /// Optional count of how many screenshots to take 
+    /// Optional count of how many screenshots to take
     #[arg(short, long, value_name = "NUMBER")]
     count: Option<u32>,
-
-    /// If set the screen capture will run continuously until stopped 
-    /// with Ctrl-C.  Overrides the count parameter.
+    /// If set the screen capture will run continuously until stopped
+    /// with Ctrl-C. Overrides the count parameter.
     #[arg(short, long, action)]
     forever: bool,
 }
@@ -49,14 +49,14 @@ fn main() {
     set_log_level("info");
     env_logger::init();
     debug!("Starting screen capturing!");
-
-    let mut interval: u16 = DEFAULT_INTERVAL;
-    let mut count: u32 = FOREVER;
-    let mut path: PathBuf = PathBuf::from("");
-    let mut forever: bool = false;
-
-    parse_cli_params(&mut path, &mut interval, &mut count, &mut forever);
     enable_ctrl_break();
+
+    let cli: Cli = Cli::parse();
+    let path = std::path::absolute(PathBuf::from(cli.path.unwrap_or(String::from(".")))).unwrap();
+    let interval = cli.interval.unwrap_or(DEFAULT_INTERVAL);
+    let count = cli.count.unwrap_or(DEFAULT_COUNT);
+    let forever = cli.forever;
+
     write_screenshots(&path, &interval, &count, &forever);
 
     debug!("Stopping screen capturing!");
@@ -64,18 +64,10 @@ fn main() {
 
 fn enable_ctrl_break() {
     ctrlc::set_handler(|| {
-        info!("Capturing stopped by Ctrl-C");
+        debug!("Capturing stopped by Ctrl-C");
         std::process::exit(0);
     })
     .expect("Ctrl-C handler failure.");
-}
-
-fn parse_cli_params(path: &mut PathBuf, interval: &mut u16, count: &mut u32, forever: &mut bool) {
-    let cli: Cli = Cli::parse();
-    *path = std::path::absolute(PathBuf::from(cli.path.unwrap_or(String::from(".")))).unwrap();
-    *interval = cli.interval.unwrap_or(DEFAULT_INTERVAL);
-    *count = cli.count.unwrap_or(DEFAULT_COUNT);
-    *forever = cli.forever;
 }
 
 fn write_screenshots(path: &PathBuf, interval: &u16, count: &u32, forever: &bool) {
@@ -102,16 +94,15 @@ fn create_timed_file_full_path(path: &PathBuf) -> PathBuf {
 }
 
 fn save_screenshot(filename: &PathBuf) {
-        let image = capture_screen().unwrap();
-        let mut file = File::create(&filename).unwrap();
-        file.write_all(image.buffer()).unwrap();
-        info!("Saved screenshot {}", &filename.display());
+    let image = capture_screen().unwrap();
+    let mut file = File::create(&filename).unwrap();
+    file.write_all(image.buffer()).unwrap();
+    info!("Saved screenshot {}", &filename.display());
 }
 
 fn capture_screen() -> Result<Image, ImageError> {
     let di = DisplayInfo::from_point(0, 0).unwrap();
     let screen = Screen::new(&di);
-    debug!("capturer {:?}", screen);
     let image = screen.capture().unwrap();
     return Ok(image);
 }
@@ -154,18 +145,19 @@ mod unit_tests {
     fn setloglevel_sets_rust_log_env_variable_to_level() {
         const EXPECTED: &str = "warning";
         env::remove_var(RUST_LOG);
-        assert!(env::var(RUST_LOG).is_err());
         set_log_level(EXPECTED);
         assert!(env::var(RUST_LOG).unwrap() == EXPECTED);
     }
 }
 
-
 #[cfg(test)]
 mod integration_tests {
     use super::*;
+    #[ignore]
     #[test]
-    fn tbd() {
-        assert!(true);
+    fn create_timed_file_full_path_should_create_full_path() {
+        const EXPECTED: &str = "tbd";
+        let tmp_dir = TempDir::new("example").unwrap();
+        assert_eq!(EXPECTED, "FAIL")
     }
 }
