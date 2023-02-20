@@ -10,7 +10,7 @@ use std::env;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{PathBuf, absolute};
 use std::thread;
 use std::time::Duration;
 #[cfg(test)]
@@ -52,7 +52,7 @@ fn main() {
     enable_ctrl_break();
 
     let cli: Cli = Cli::parse();
-    let path = std::path::absolute(PathBuf::from(cli.path.unwrap_or(String::from(".")))).unwrap();
+    let path = PathBuf::from(cli.path.unwrap_or(String::from(".")));
     let interval = cli.interval.unwrap_or(DEFAULT_INTERVAL);
     let count = cli.count.unwrap_or(DEFAULT_COUNT);
     let forever = cli.forever;
@@ -73,7 +73,8 @@ fn enable_ctrl_break() {
 fn write_screenshots(path: &PathBuf, interval: &u16, count: &u32, forever: &bool) {
     let mut times_left = *count;
     loop {
-        let date_path: PathBuf = path.join(Local::now().format("%Y-%m-%d").to_string());
+        let full_path = absolute(PathBuf::from(path)).unwrap();
+        let date_path: PathBuf = full_path.join(Local::now().format("%Y-%m-%d").to_string());
         fs::create_dir_all(&date_path).expect("Failed to create directory.");
         let filename: String = Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png";
         let full_path = date_path.join(&filename);
