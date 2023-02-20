@@ -73,7 +73,10 @@ fn enable_ctrl_break() {
 fn write_screenshots(path: &PathBuf, interval: &u16, count: &u32, forever: &bool) {
     let mut times_left = *count;
     loop {
-        let full_path = create_timed_file_full_path(&path);
+        let date_path: PathBuf = path.join(Local::now().format("%Y-%m-%d").to_string());
+        fs::create_dir_all(&date_path).expect("Failed to create directory.");
+        let filename: String = Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png";
+        let full_path = date_path.join(&filename);
         //let _handle = thread::spawn(move || save_screenshot(&full_path));
         save_screenshot(&full_path);
         if !*forever {
@@ -84,13 +87,6 @@ fn write_screenshots(path: &PathBuf, interval: &u16, count: &u32, forever: &bool
         }
         thread::sleep(Duration::from_secs(*interval as u64));
     }
-}
-
-fn create_timed_file_full_path(path: &PathBuf) -> PathBuf {
-    let daypath: PathBuf = path.join(Local::now().format("%Y-%m-%d").to_string());
-    fs::create_dir_all(&daypath).expect("Failed to create directory.");
-    let filename: String = Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png";
-    daypath.join(&filename)
 }
 
 fn save_screenshot(filename: &PathBuf) {
@@ -157,7 +153,7 @@ mod integration_tests {
     #[test]
     fn create_timed_file_full_path_should_create_full_path() {
         const EXPECTED: &str = "tbd";
-        let tmp_dir = TempDir::new("example").unwrap();
+        let _tmp_dir = TempDir::new("example").unwrap();
         assert_eq!(EXPECTED, "FAIL")
     }
 }
