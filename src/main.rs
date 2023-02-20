@@ -10,7 +10,7 @@ use std::env;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
-use std::path::{PathBuf, absolute};
+use std::path::{self, PathBuf};
 use std::thread;
 use std::time::Duration;
 #[cfg(test)]
@@ -73,11 +73,11 @@ fn enable_ctrl_break() {
 fn write_screenshots(path: &PathBuf, interval: &u16, count: &u32, forever: &bool) {
     let mut times_left = *count;
     loop {
-        let full_path = absolute(PathBuf::from(path)).unwrap();
-        let date_path: PathBuf = full_path.join(Local::now().format("%Y-%m-%d").to_string());
-        fs::create_dir_all(&date_path).expect("Failed to create directory.");
-        let filename: String = Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png";
-        let full_path = date_path.join(&filename);
+        let date_folder_path = path::absolute(PathBuf::from(path)).unwrap()
+                        .join(Local::now().format("%Y-%m-%d").to_string());
+        fs::create_dir_all(&date_folder_path).expect("Failed to create directory.");
+        let full_path = date_folder_path
+                        .join(Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png");
         //let _handle = thread::spawn(move || save_screenshot(&full_path));
         save_screenshot(&full_path);
         if !*forever {
