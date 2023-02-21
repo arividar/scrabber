@@ -57,7 +57,7 @@ fn main() {
     let count = cli.count.unwrap_or(DEFAULT_COUNT);
     let forever = cli.forever;
 
-    write_screenshots(&path, &interval, &count, &forever);
+    write_screenshots(path, interval, count, forever);
 
     debug!("Stopping screen capturing!");
 }
@@ -70,22 +70,22 @@ fn enable_ctrl_break() {
     .expect("Ctrl-C handler failure.");
 }
 
-fn write_screenshots(p: &PathBuf, interval: &u16, count: &u32, forever: &bool) {
-    let mut times_left = *count;
+fn write_screenshots(p: PathBuf, interval: u16, count: u32, forever: bool) {
+    let mut times_left = count;
     loop {
-        let date_folder_path = current_date_folder(p);
+        let date_folder_path = current_date_folder(&p);
         fs::create_dir_all(&date_folder_path).expect("Failed to create directory.");
         let full_path = date_folder_path
                         .join(Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png");
         //let _handle = thread::spawn(move || save_screenshot(&full_path));
         save_screenshot(&full_path);
-        if !*forever {
+        if !forever {
             times_left -= 1;
             if times_left < 1 {
                 break;
             }
         }
-        thread::sleep(Duration::from_secs(*interval as u64));
+        thread::sleep(Duration::from_secs(interval as u64));
     }
 }
 
@@ -152,8 +152,9 @@ mod unit_tests {
     
     #[test]
     fn test_current_date_folder() {
-     //  path::absolute(PathBuf::from(p)).unwrap()
-     //        .join(Local::now().format("%Y-%m-%d").to_string())
+        //  path::absolute(PathBuf::from(p)).unwrap()
+        //        .join(Local::now().format("%Y-%m-%d").to_string())
+        const EXPECTED: &str = env::current_dir();
     }
 }
 
