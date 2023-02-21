@@ -149,6 +149,12 @@ mod unit_tests {
         set_log_level(EXPECTED);
         assert!(env::var(RUST_LOG).unwrap() == EXPECTED);
     }
+    
+    #[test]
+    fn test_current_date_folder() {
+     //  path::absolute(PathBuf::from(p)).unwrap()
+     //        .join(Local::now().format("%Y-%m-%d").to_string())
+    }
 }
 
 #[cfg(test)]
