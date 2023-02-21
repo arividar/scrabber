@@ -1,6 +1,6 @@
 #![feature(absolute_path)]
 #[allow(dead_code)]
-use chrono::Local;
+use chrono::{Local, NaiveDate};
 use clap::Parser;
 use ctrlc;
 use image::ImageError;
@@ -116,6 +116,8 @@ fn set_log_level(loglevel: &str) {
 
 #[cfg(test)]
 mod unit_tests {
+    use std::{path::absolute, env::current_dir};
+
     use super::*;
 
     #[test]
@@ -128,8 +130,7 @@ mod unit_tests {
     fn setloglevel_creates_rustlog_env_variable_if_it_doesnt_exist() {
         env::remove_var(RUST_LOG);
         assert!(env::var(RUST_LOG).is_err());
-        set_log_level("");
-        assert!(env::var(RUST_LOG).is_ok());
+        set_log_level(""); assert!(env::var(RUST_LOG).is_ok());
     }
 
     #[test]
@@ -154,7 +155,9 @@ mod unit_tests {
     fn test_current_date_folder() {
         //  path::absolute(PathBuf::from(p)).unwrap()
         //        .join(Local::now().format("%Y-%m-%d").to_string())
-        const EXPECTED: &str = env::current_dir();
+        const TEST_DATE_STR: &str = "2023-01-31";
+        let test_date: NaiveDate = NaiveDate::parse_from_str(TEST_DATE_STR, "%Y-%m-%d").unwrap();
+        let expected: PathBuf = path::absolute(env::current_dir().unwrap()).unwrap().join(TEST_DATE_STR);
     }
 }
 
