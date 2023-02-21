@@ -70,11 +70,10 @@ fn enable_ctrl_break() {
     .expect("Ctrl-C handler failure.");
 }
 
-fn write_screenshots(path: &PathBuf, interval: &u16, count: &u32, forever: &bool) {
+fn write_screenshots(p: &PathBuf, interval: &u16, count: &u32, forever: &bool) {
     let mut times_left = *count;
     loop {
-        let date_folder_path = path::absolute(PathBuf::from(path)).unwrap()
-                        .join(Local::now().format("%Y-%m-%d").to_string());
+        let date_folder_path = current_date_folder(p);
         fs::create_dir_all(&date_folder_path).expect("Failed to create directory.");
         let full_path = date_folder_path
                         .join(Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png");
@@ -88,6 +87,11 @@ fn write_screenshots(path: &PathBuf, interval: &u16, count: &u32, forever: &bool
         }
         thread::sleep(Duration::from_secs(*interval as u64));
     }
+}
+
+fn current_date_folder(p: &PathBuf) -> PathBuf {
+   path::absolute(PathBuf::from(p)).unwrap()
+         .join(Local::now().format("%Y-%m-%d").to_string())
 }
 
 fn save_screenshot(filename: &PathBuf) {
