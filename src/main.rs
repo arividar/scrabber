@@ -14,8 +14,12 @@ use std::path::{self, PathBuf};
 use std::thread;
 use std::time::Duration;
 #[cfg(test)]
-use tempdir::TempDir;
-
+use {
+    tempdir::TempDir,
+    mockall::predicate::*,
+    mockall::Sequence,
+    std::sync::Once,
+};
 const RUST_LOG: &str = "RUST_LOG";
 const DEFAULT_INTERVAL: u16 = 10;
 const DEFAULT_COUNT: u32 = 1;
