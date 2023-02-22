@@ -155,9 +155,11 @@ mod unit_tests {
     fn test_current_date_folder() {
         //  path::absolute(PathBuf::from(p)).unwrap()
         //        .join(Local::now().format("%Y-%m-%d").to_string())
+        const TEST_PATH: PathBuf = env::current_dir().unwrap();
         const TEST_DATE_STR: &str = "2023-01-31";
-        let test_date: NaiveDate = NaiveDate::parse_from_str(TEST_DATE_STR, "%Y-%m-%d").unwrap();
-        let expected: PathBuf = path::absolute(env::current_dir().unwrap()).unwrap().join(TEST_DATE_STR);
+        const TEST_DATE: NaiveDate = NaiveDate::parse_from_str(TEST_DATE_STR, "%Y-%m-%d").unwrap();
+        let expected: PathBuf = path::absolute(TEST_PATH).unwrap().join(TEST_DATE_STR);
+        
     }
 }
 
