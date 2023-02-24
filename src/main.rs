@@ -1,6 +1,5 @@
 #![feature(absolute_path)]
-#[allow(dead_code)]
-use chrono::{Local, NaiveDate};
+use chrono::Local;
 use clap::Parser;
 use ctrlc;
 use image::ImageError;
@@ -16,9 +15,6 @@ use std::time::Duration;
 #[cfg(test)]
 use {
     tempdir::TempDir,
-    mockall::predicate::*,
-    mockall::Sequence,
-    std::sync::Once,
 };
 const RUST_LOG: &str = "RUST_LOG";
 const DEFAULT_INTERVAL: u16 = 10;
@@ -120,8 +116,6 @@ fn set_log_level(loglevel: &str) {
 
 #[cfg(test)]
 mod unit_tests {
-    use std::{path::absolute, env::current_dir};
-
     use super::*;
 
     #[test]
@@ -155,23 +149,21 @@ mod unit_tests {
         assert!(env::var(RUST_LOG).unwrap() == EXPECTED);
     }
     
-    #[test]
-    fn test_current_date_folder() {
-        //  path::absolute(PathBuf::from(p)).unwrap()
-        //        .join(Local::now().format("%Y-%m-%d").to_string())
-        const TEST_PATH: PathBuf = env::current_dir().unwrap();
-        const TEST_DATE_STR: &str = "2023-01-31";
-        const TEST_DATE: NaiveDate = NaiveDate::parse_from_str(TEST_DATE_STR, "%Y-%m-%d").unwrap();
-        let expected: PathBuf = path::absolute(TEST_PATH).unwrap().join(TEST_DATE_STR);
-        
-    }
 }
 
 #[cfg(test)]
 mod integration_tests {
     use super::*;
-    #[ignore]
     #[test]
+    fn test_current_date_folder() {
+        //  path::absolute(PathBuf::from(p)).unwrap()
+        //        .join(Local::now().format("%Y-%m-%d").to_string())
+        let test_date_str = Local::now().format("%Y-%m-%d").to_string();
+        let test_path: PathBuf = env::current_dir().unwrap();
+        let expected: PathBuf = path::absolute(&test_path).unwrap().join(test_date_str);
+        assert_eq!(expected, current_date_folder(&test_path))
+    }
+    #[test]#[ignore] 
     fn create_timed_file_full_path_should_create_full_path() {
         const EXPECTED: &str = "tbd";
         let _tmp_dir = TempDir::new("example").unwrap();
