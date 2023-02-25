@@ -13,9 +13,7 @@ use std::path::{self, PathBuf};
 use std::thread;
 use std::time::Duration;
 #[cfg(test)]
-use {
-    tempdir::TempDir,
-};
+use tempdir::TempDir;
 const RUST_LOG: &str = "RUST_LOG";
 const DEFAULT_INTERVAL: u16 = 10;
 const DEFAULT_COUNT: u32 = 1;
@@ -52,12 +50,12 @@ fn main() {
     enable_ctrl_break();
 
     let cli: Cli = Cli::parse();
-    let path = PathBuf::from(cli.path.unwrap_or(String::from(".")));
-    let interval = cli.interval.unwrap_or(DEFAULT_INTERVAL);
-    let count = cli.count.unwrap_or(DEFAULT_COUNT);
-    let forever = cli.forever;
-
-    write_screenshots(path, interval, count, forever);
+    write_screenshots(
+        cli.path.unwrap_or(String::from(".")),
+        cli.interval.unwrap_or(DEFAULT_INTERVAL),
+        cli.count.unwrap_or(DEFAULT_COUNT),
+        cli.forever,
+    );
 
     debug!("Stopping screen capturing!");
 }
@@ -70,15 +68,15 @@ fn enable_ctrl_break() {
     .expect("Ctrl-C handler failure.");
 }
 
-fn write_screenshots(p: PathBuf, interval: u16, count: u32, forever: bool) {
+fn write_screenshots(path_str: String, interval: u16, count: u32, forever: bool) {
     let mut times_left = count;
     loop {
-        let date_folder_path = current_date_folder(&p);
+        let date_folder_path = full_path_date_folder(PathBuf::from(&path_str));
         fs::create_dir_all(&date_folder_path).expect("Failed to create directory.");
-        let full_path = date_folder_path
-                        .join(Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png");
+        let full_path =
+            date_folder_path.join(Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png");
         //let _handle = thread::spawn(move || save_screenshot(&full_path));
-        save_screenshot(&full_path);
+        write_screenshot(&full_path);
         if !forever {
             times_left -= 1;
             if times_left < 1 {
@@ -89,16 +87,17 @@ fn write_screenshots(p: PathBuf, interval: u16, count: u32, forever: bool) {
     }
 }
 
-fn current_date_folder(p: &PathBuf) -> PathBuf {
-   path::absolute(PathBuf::from(p)).unwrap()
-         .join(Local::now().format("%Y-%m-%d").to_string())
+fn full_path_date_folder(p: PathBuf) -> PathBuf {
+    path::absolute(PathBuf::from(p))
+        .unwrap()
+        .join(Local::now().format("%Y-%m-%d").to_string())
 }
 
-fn save_screenshot(filename: &PathBuf) {
+fn write_screenshot(filename: &PathBuf) {
     let image = capture_screen().unwrap();
     let mut file = File::create(&filename).unwrap();
     file.write_all(image.buffer()).unwrap();
-    info!("Saved screenshot {}", &filename.display());
+    info!("Wrote screenshot {}", &filename.display());
 }
 
 fn capture_screen() -> Result<Image, ImageError> {
@@ -128,7 +127,8 @@ mod unit_tests {
     fn setloglevel_creates_rustlog_env_variable_if_it_doesnt_exist() {
         env::remove_var(RUST_LOG);
         assert!(env::var(RUST_LOG).is_err());
-        set_log_level(""); assert!(env::var(RUST_LOG).is_ok());
+        set_log_level("");
+        assert!(env::var(RUST_LOG).is_ok());
     }
 
     #[test]
@@ -148,25 +148,30 @@ mod unit_tests {
         set_log_level(EXPECTED);
         assert!(env::var(RUST_LOG).unwrap() == EXPECTED);
     }
-    
 }
 
 #[cfg(test)]
 mod integration_tests {
     use super::*;
     #[test]
-    fn test_current_date_folder() {
-        //  path::absolute(PathBuf::from(p)).unwrap()
-        //        .join(Local::now().format("%Y-%m-%d").to_string())
+    fn should_return_full_path_date_folder() {
         let test_date_str = Local::now().format("%Y-%m-%d").to_string();
         let test_path: PathBuf = env::current_dir().unwrap();
         let expected: PathBuf = path::absolute(&test_path).unwrap().join(test_date_str);
-        assert_eq!(expected, current_date_folder(&test_path))
+        assert_eq!(expected, full_path_date_folder(test_path))
     }
-    #[test]#[ignore] 
-    fn create_timed_file_full_path_should_create_full_path() {
-        const EXPECTED: &str = "tbd";
-        let _tmp_dir = TempDir::new("example").unwrap();
-        assert_eq!(EXPECTED, "FAIL")
+
+    #[test]
+    fn write_screenshot_should_create_one_screenshot_in_folder() {
+
+        fn count_files_in_folder(folder: &PathBuf) -> usize {
+            fs::read_dir(folder).unwrap().count()
+        }
+
+        let tmp_dir = path::absolute(TempDir::new("example").unwrap().path()).unwrap();
+        // fs::create_dir_all(&tmp_dir).unwrap();
+        let expected = count_files_in_folder(&tmp_dir) + 1;
+        write_screenshot(&tmp_dir);
+        assert_eq!(expected, count_files_in_folder(&tmp_dir));
     }
 }
