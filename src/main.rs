@@ -12,7 +12,7 @@ use std::io::Write;
 use std::path::{self, PathBuf};
 use std::thread;
 use std::time::Duration;
-// #[cfg(test)]
+#[cfg(test)]
 use tempdir::TempDir;
 
 const RUST_LOG: &str = "RUST_LOG";
@@ -51,7 +51,6 @@ fn main() {
     enable_ctrl_break();
 
     let cli: Cli = Cli::parse();
-    tmp_test();
     write_screenshots(
         cli.path.unwrap_or(String::from(".")),
         cli.interval.unwrap_or(DEFAULT_INTERVAL),
@@ -60,21 +59,6 @@ fn main() {
     );
 
     debug!("Stopping screen capturing!");
-}
-
-fn tmp_test() {
-    fn count_files_in_folder(folder: &PathBuf) -> usize {
-        fs::read_dir(folder).unwrap().count()
-    }
-
-    let tmp_dir = path::absolute(TempDir::new("example").unwrap().path()).unwrap();
-    fs::create_dir_all(&tmp_dir).unwrap();
-    let expected = count_files_in_folder(&tmp_dir) + 1;
-    println!("count={}", &expected);
-    println!("dir={}", &tmp_dir.display());
-    write_screenshot(&tmp_dir);
-    assert_eq!(expected, count_files_in_folder(&tmp_dir));
-    println!("count={}", &expected);
 }
 
 fn enable_ctrl_break() {
@@ -90,8 +74,7 @@ fn write_screenshots(path_str: String, interval: u16, count: u32, forever: bool)
     loop {
         let date_folder_path = full_path_date_folder(PathBuf::from(&path_str));
         fs::create_dir_all(&date_folder_path).expect("Failed to create directory.");
-        let full_path =
-            date_folder_path.join(Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png");
+        let full_path = date_folder_path.join(current_time_image_filename());
         //let _handle = thread::spawn(move || save_screenshot(&full_path));
         write_screenshot(&full_path);
         if !forever {
@@ -110,8 +93,13 @@ fn full_path_date_folder(p: PathBuf) -> PathBuf {
         .join(Local::now().format("%Y-%m-%d").to_string())
 }
 
+fn current_time_image_filename() -> String {
+    Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png"
+}
+
 fn write_screenshot(filename: &PathBuf) {
     let image = capture_screen().unwrap();
+    println!("**** writing to file: {}", &filename.display());
     let mut file = File::create(&filename).unwrap();
     file.write_all(image.buffer()).unwrap();
     info!("Wrote screenshot {}", &filename.display());
@@ -186,8 +174,9 @@ mod integration_tests {
 
         let tmp_dir = path::absolute(TempDir::new("example").unwrap().path()).unwrap();
         fs::create_dir_all(&tmp_dir).unwrap();
-        let expected = count_files_in_folder(&tmp_dir) + 1;
-        write_screenshot(&tmp_dir);
-        assert_eq!(expected, count_files_in_folder(&tmp_dir));
+        let filename = &PathBuf::from(&tmp_dir.join(current_time_image_filename()));
+        assert_eq!(0, count_files_in_folder(&tmp_dir));
+        write_screenshot(&filename);
+        assert_eq!(1, count_files_in_folder(&tmp_dir));
     }
 }
