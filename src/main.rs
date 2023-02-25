@@ -13,8 +13,10 @@ use std::path::{self, PathBuf};
 use std::thread;
 use std::time::Duration;
 #[cfg(test)]
-use tempdir::TempDir;
-
+use {
+    tempdir::TempDir,
+    std::fs::read_dir,
+};
 const RUST_LOG: &str = "RUST_LOG";
 const DEFAULT_INTERVAL: u16 = 10;
 const DEFAULT_COUNT: u32 = 1;
@@ -99,7 +101,6 @@ fn current_time_image_filename() -> String {
 
 fn write_screenshot(filename: &PathBuf) {
     let image = capture_screen().unwrap();
-    println!("**** writing to file: {}", &filename.display());
     let mut file = File::create(&filename).unwrap();
     file.write_all(image.buffer()).unwrap();
     info!("Wrote screenshot {}", &filename.display());
@@ -158,6 +159,11 @@ mod unit_tests {
 #[cfg(test)]
 mod integration_tests {
     use super::*;
+    
+    fn file_count(folder: &PathBuf) -> u32 {
+        read_dir(folder).unwrap().count() as u32
+    }
+    
     #[test]
     fn should_return_full_path_date_folder() {
         let test_date_str = Local::now().format("%Y-%m-%d").to_string();
@@ -167,8 +173,19 @@ mod integration_tests {
     }
 
     #[test]
+    fn write_screenshots_with_count_three_should_create_one_subdirectory() {
+        let tmp_path = path::absolute(TempDir::new("scrabber").unwrap()).unwrap();
+        let tmp_path_str = tmp_path.to_str().unwrap();
+        const EXPECTED: u32 = 1;
+        fs::create_dir_all(&tmp_path_str).unwrap();
+        assert_eq!(0, file_count(&tmp_path));
+        write_screenshots(String::from(tmp_path_str), 0, EXPECTED, false);
+        assert_eq!(EXPECTED, file_count(&tmp_path));
+    }
+
+    #[test]
     fn write_screenshot_should_create_a_file() {
-        let tmp_dir = path::absolute(TempDir::new("example").unwrap().path()).unwrap();
+        let tmp_dir = path::absolute(TempDir::new("scrabber").unwrap().path()).unwrap();
         fs::create_dir_all(&tmp_dir).unwrap();
         let filename = &PathBuf::from(&tmp_dir.join(current_time_image_filename()));
         assert!(!&filename.exists());
