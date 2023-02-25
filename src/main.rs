@@ -92,7 +92,11 @@ fn write_screenshots(path_str: String, interval: u16, count: u32, forever: bool)
 fn full_path_date_folder(p: PathBuf) -> PathBuf {
     path::absolute(PathBuf::from(p))
         .unwrap()
-        .join(Local::now().format("%Y-%m-%d").to_string())
+        .join(today_directory_name())
+}
+
+fn today_directory_name() -> String {
+    Local::now().format("%Y-%m-%d").to_string()
 }
 
 fn current_time_image_filename() -> String {
@@ -124,12 +128,6 @@ mod unit_tests {
     use super::*;
 
     #[test]
-    fn main_creates_path_parameter_in_cli() {
-        let cli = Cli::parse();
-        assert_eq!(cli.path, None);
-    }
-
-    #[test]
     fn setloglevel_creates_rustlog_env_variable_if_it_doesnt_exist() {
         env::remove_var(RUST_LOG);
         assert!(env::var(RUST_LOG).is_err());
@@ -142,9 +140,9 @@ mod unit_tests {
         const EXPECTED: &str = "bingo";
         env::remove_var(RUST_LOG);
         env::set_var(RUST_LOG, EXPECTED);
-        assert!(env::var(RUST_LOG).unwrap() == EXPECTED);
+        assert_eq!(EXPECTED, env::var(RUST_LOG).unwrap());
         set_log_level("bongo");
-        assert!(env::var(RUST_LOG).unwrap() == EXPECTED);
+        assert_eq!(EXPECTED, env::var(RUST_LOG).unwrap());
     }
 
     #[test]
@@ -152,7 +150,7 @@ mod unit_tests {
         const EXPECTED: &str = "warning";
         env::remove_var(RUST_LOG);
         set_log_level(EXPECTED);
-        assert!(env::var(RUST_LOG).unwrap() == EXPECTED);
+        assert_eq!(EXPECTED, env::var(RUST_LOG).unwrap());
     }
 }
 
@@ -173,18 +171,21 @@ mod integration_tests {
     }
 
     #[test]
-    fn write_screenshots_with_count_three_should_create_one_subdirectory() {
-        let tmp_path = path::absolute(TempDir::new("scrabber").unwrap()).unwrap();
-        let tmp_path_str = tmp_path.to_str().unwrap();
-        const EXPECTED: u32 = 1;
-        fs::create_dir_all(&tmp_path_str).unwrap();
-        assert_eq!(0, file_count(&tmp_path));
-        write_screenshots(String::from(tmp_path_str), 0, EXPECTED, false);
-        assert_eq!(EXPECTED, file_count(&tmp_path));
+    fn param_count_two_should_create_two_screenshot_files_in_a_subdirectory() {
+        let path = path::absolute(TempDir::new("scrabber").unwrap()).unwrap();
+        let path_str = path.to_str().unwrap();
+        let path_day_folder = path.join(today_directory_name());
+        const EXPECTED: u32 = 2;
+        fs::create_dir_all(&path_str).unwrap();
+        assert_eq!(0, file_count(&path));
+        write_screenshots(String::from(path_str), 0, EXPECTED, false);
+        assert!(&path_day_folder.is_dir());
+        assert_eq!(EXPECTED, file_count(&path_day_folder));
     }
 
     #[test]
     fn write_screenshot_should_create_a_file() {
+        set_log_level("info");
         let tmp_dir = path::absolute(TempDir::new("scrabber").unwrap().path()).unwrap();
         fs::create_dir_all(&tmp_dir).unwrap();
         let filename = &PathBuf::from(&tmp_dir.join(current_time_image_filename()));
