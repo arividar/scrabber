@@ -14,8 +14,8 @@ log = "0.4.17"
 rand = "0.8"
 fs = "0.0"
 screenshots = { git = "https://github.com/nashaofu/screenshots-rs.git" }
+tempdir = "0.3"
 
 [dev-dependencies]
-tempdir = "0.3"
 mockall = "0.11"
 mock_derive = "0.8"

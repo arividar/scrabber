@@ -12,8 +12,9 @@ use std::io::Write;
 use std::path::{self, PathBuf};
 use std::thread;
 use std::time::Duration;
-#[cfg(test)]
+// #[cfg(test)]
 use tempdir::TempDir;
+
 const RUST_LOG: &str = "RUST_LOG";
 const DEFAULT_INTERVAL: u16 = 10;
 const DEFAULT_COUNT: u32 = 1;
@@ -50,6 +51,7 @@ fn main() {
     enable_ctrl_break();
 
     let cli: Cli = Cli::parse();
+    tmp_test();
     write_screenshots(
         cli.path.unwrap_or(String::from(".")),
         cli.interval.unwrap_or(DEFAULT_INTERVAL),
@@ -58,6 +60,21 @@ fn main() {
     );
 
     debug!("Stopping screen capturing!");
+}
+
+fn tmp_test() {
+    fn count_files_in_folder(folder: &PathBuf) -> usize {
+        fs::read_dir(folder).unwrap().count()
+    }
+
+    let tmp_dir = path::absolute(TempDir::new("example").unwrap().path()).unwrap();
+    fs::create_dir_all(&tmp_dir).unwrap();
+    let expected = count_files_in_folder(&tmp_dir) + 1;
+    println!("count={}", &expected);
+    println!("dir={}", &tmp_dir.display());
+    write_screenshot(&tmp_dir);
+    assert_eq!(expected, count_files_in_folder(&tmp_dir));
+    println!("count={}", &expected);
 }
 
 fn enable_ctrl_break() {
