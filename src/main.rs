@@ -25,9 +25,9 @@ const DEFAULT_COUNT: u32 = 1;
 #[command(author, version = None)]
 #[command(about = "Periodically captures a screenshot and saves to a file")]
 #[command(
-    long_about = "Scrabber captures a screenshot and saves them to png-files in the supplied 
-directory. By default the file is named by the current date and time like 
-so 2027-06-20_10.06.37.png."
+    long_about = "Scrabber a command line utility that captures screenshot periodically
+and writes them to a supplied directory. By default the file is named by the current
+date and time like so 2027-06-20_10.06.37.png."
 )]
 
 pub struct Cli {
@@ -59,7 +59,6 @@ fn main() {
         cli.count.unwrap_or(DEFAULT_COUNT),
         cli.forever,
     );
-
     debug!("Stopping screen capturing!");
 }
 
@@ -157,7 +156,7 @@ mod unit_tests {
 #[cfg(test)]
 mod integration_tests {
     use super::*;
-    
+   
     fn file_count(folder: &PathBuf) -> u32 {
         read_dir(folder).unwrap().count() as u32
     }
