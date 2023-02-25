@@ -167,16 +167,12 @@ mod integration_tests {
     }
 
     #[test]
-    fn write_screenshot_should_create_one_screenshot_in_folder() {
-        fn count_files_in_folder(folder: &PathBuf) -> usize {
-            fs::read_dir(folder).unwrap().count()
-        }
-
+    fn write_screenshot_should_create_a_file() {
         let tmp_dir = path::absolute(TempDir::new("example").unwrap().path()).unwrap();
         fs::create_dir_all(&tmp_dir).unwrap();
         let filename = &PathBuf::from(&tmp_dir.join(current_time_image_filename()));
-        assert_eq!(0, count_files_in_folder(&tmp_dir));
+        assert!(!&filename.exists());
         write_screenshot(&filename);
-        assert_eq!(1, count_files_in_folder(&tmp_dir));
+        assert!(&filename.exists());
     }
 }
