@@ -163,13 +163,12 @@ mod integration_tests {
 
     #[test]
     fn write_screenshot_should_create_one_screenshot_in_folder() {
-
         fn count_files_in_folder(folder: &PathBuf) -> usize {
             fs::read_dir(folder).unwrap().count()
         }
 
         let tmp_dir = path::absolute(TempDir::new("example").unwrap().path()).unwrap();
-        // fs::create_dir_all(&tmp_dir).unwrap();
+        fs::create_dir_all(&tmp_dir).unwrap();
         let expected = count_files_in_folder(&tmp_dir) + 1;
         write_screenshot(&tmp_dir);
         assert_eq!(expected, count_files_in_folder(&tmp_dir));
