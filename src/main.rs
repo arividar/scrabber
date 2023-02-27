@@ -207,6 +207,4 @@ mod integration_tests {
         let filename = &PathBuf::from(&tmp_dir.join(current_time_image_filename()));
         assert!(!&filename.exists());
         write_screenshot(&filename);
-        assert!(&filename.exists());
-    }
-}
+        assert!(&filename.exists()); } }
