@@ -70,6 +70,24 @@ fn enable_ctrl_break() {
     .expect("Ctrl-C handler failure.");
 }
 
+struct ScreenshotWriter {
+    last_screenshot: Image,
+    write_folder: PathBuf,
+}
+
+impl ScreenshotWriter {
+    fn capture_screenshotli(&self) {
+        let image = capture_screen().unwrap();
+    }
+
+    fn write_screenshot(&self, filename: &PathBuf) {
+        let image = capture_screen().unwrap();
+        let mut file = File::create(&filename).unwrap();
+        file.write_all(image.buffer()).unwrap();
+        info!("Wrote screenshot {}", &filename.display());
+    }
+}
+
 fn write_screenshots(path_str: String, interval: u16, count: u32, forever: bool) {
     let mut times_left = count;
     loop {
