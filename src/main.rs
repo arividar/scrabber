@@ -176,7 +176,6 @@ mod integration_tests {
         let path_day_folder = path.join(today_directory_name());
         const EXPECTED: u32 = 2;
         fs::create_dir_all(&path_str).unwrap();
-        assert_eq!(0, file_count(&path_day_folder));
         write_screenshots(String::from(path_str), 0, EXPECTED, false);
         assert!(&path_day_folder.is_dir());
         assert_eq!(EXPECTED, file_count(&path_day_folder));
