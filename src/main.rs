@@ -13,10 +13,7 @@ use std::path::{self, PathBuf};
 use std::thread;
 use std::time::Duration;
 #[cfg(test)]
-use {
-    tempdir::TempDir,
-    std::fs::read_dir,
-};
+use {std::fs::read_dir, tempdir::TempDir};
 const RUST_LOG: &str = "RUST_LOG";
 const DEFAULT_INTERVAL: u16 = 10;
 const DEFAULT_COUNT: u32 = 1;
@@ -52,6 +49,8 @@ fn main() {
     debug!("Starting screen capturing!");
     enable_ctrl_break();
 
+    let sr = ScreenshotWriter::new();
+
     let cli: Cli = Cli::parse();
     write_screenshots(
         cli.path.unwrap_or(String::from(".")),
@@ -71,11 +70,18 @@ fn enable_ctrl_break() {
 }
 
 struct ScreenshotWriter {
-    last_screenshot: Image,
+    last_screenshot: Option<Image>,
     write_folder: PathBuf,
 }
 
 impl ScreenshotWriter {
+    fn new() -> Self {
+        ScreenshotWriter {
+            last_screenshot: None,
+            write_folder: PathBuf::from("~")
+        }
+    }
+
     fn capture_screenshotli(&self) {
         let image = capture_screen().unwrap();
     }
@@ -85,6 +91,12 @@ impl ScreenshotWriter {
         let mut file = File::create(&filename).unwrap();
         file.write_all(image.buffer()).unwrap();
         info!("Wrote screenshot {}", &filename.display());
+    }
+}
+
+impl Default for ScreenshotWriter {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -174,11 +186,11 @@ mod unit_tests {
 #[cfg(test)]
 mod integration_tests {
     use super::*;
-   
+
     fn file_count(folder: &PathBuf) -> u32 {
         read_dir(folder).unwrap().count() as u32
     }
-    
+
     #[test]
     fn should_return_full_path_date_folder() {
         let test_date_str = Local::now().format("%Y-%m-%d").to_string();
@@ -207,4 +219,6 @@ mod integration_tests {
         let filename = &PathBuf::from(&tmp_dir.join(current_time_image_filename()));
         assert!(!&filename.exists());
         write_screenshot(&filename);
-        assert!(&filename.exists()); } }
+        assert!(&filename.exists());
+    }
+}
