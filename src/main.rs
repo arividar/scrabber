@@ -85,12 +85,15 @@ impl ScreenshotWriter {
         }
     }
     
-    pub fn write_screenshot(&mut self, filename: &PathBuf) {
+    pub fn write_screenshot(&mut self) {
+        fs::create_dir_all(self.full_path_date_folder()).expect("Failed to create directory.");
+        let full_path = self.full_path_date_folder().join(ScreenshotWriter::current_time_image_filename());
+
         let image = capture_screen().unwrap();
-        let mut file = File::create(&filename).unwrap();
+        let mut file = File::create(&full_path).unwrap();
         file.write_all(image.buffer()).unwrap();
         self.last_screenshot = image;
-        info!("Wrote screenshot {}", &filename.display());
+        info!("Wrote screenshot {}", &full_path.display());
     }
     
     pub fn write_folder(&self) -> &PathBuf {
@@ -117,11 +120,8 @@ fn write_screenshots(path_str: String, interval: u16, count: u32, forever: bool)
     let mut ssw = ScreenshotWriter::new(PathBuf::from(&path_str));
     let mut times_left = count;
     loop {
-        let date_folder_path = ssw.full_path_date_folder();
-        fs::create_dir_all(&date_folder_path).expect("Failed to create directory.");
-        let full_path = date_folder_path.join(ScreenshotWriter::current_time_image_filename());
         //let _handle = thread::spawn(move || save_screenshot(&full_path));
-        ssw.write_screenshot(&full_path);
+        ssw.write_screenshot();
         if !forever {
             times_left -= 1;
             if times_left < 1 {
@@ -219,9 +219,9 @@ mod integration_tests {
         let tmp_dir = path::absolute(TempDir::new("scrabber").unwrap().path()).unwrap();
         fs::create_dir_all(&tmp_dir).unwrap();
         let mut ssw = ScreenshotWriter::new(PathBuf::from(&tmp_dir));
-        let filename = &PathBuf::from(&tmp_dir.join(ScreenshotWriter::current_time_image_filename()));
+        let filename = &PathBuf::from(ssw.full_path_date_folder().join(ScreenshotWriter::current_time_image_filename()));
         assert!(!&filename.exists());
-        ssw.write_screenshot(&filename);
+        ssw.write_screenshot();
         assert!(&filename.exists());
     }
     
