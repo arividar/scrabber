@@ -1,22 +1,21 @@
 #![feature(absolute_path)]
-use chrono::Local;
 use clap::Parser;
 use ctrlc;
-use image::ImageError;
-use log::{debug, info};
-use screenshots::{DisplayInfo, Image, Screen};
+use log::{debug};
+use scrabber::ScreenshotWriter;
 use std::env;
-use std::fs;
-use std::fs::File;
-use std::io::Write;
-use std::path::{self, PathBuf};
+use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
+
 #[cfg(test)]
 use {
-    std::fs::read_dir,
-    tempdir::TempDir,
+    std::fs,
+    std::path,
+    chrono::Local,
     serial_test::serial,
+    std::fs::read_dir,
+    tempdir::TempDir
 };
 
 const RUST_LOG: &str = "RUST_LOG";
@@ -72,50 +71,6 @@ fn enable_ctrl_break() {
     .expect("Ctrl-C handler failure.");
 }
 
-struct ScreenshotWriter {
-    write_folder: PathBuf,
-    last_screenshot: Image,
-}
-
-impl ScreenshotWriter {
-    pub fn new(folder: PathBuf) -> Self {
-        return ScreenshotWriter {
-            write_folder: path::absolute(PathBuf::from(&folder)).unwrap(),
-            last_screenshot: Image::new(0, 0, Vec::new()),
-        }
-    }
-    
-    pub fn write_screenshot(&mut self) {
-        fs::create_dir_all(self.full_path_date_folder()).expect("Failed to create directory.");
-        let full_path = self.full_path_date_folder().join(ScreenshotWriter::current_time_image_filename());
-
-        let image = capture_screen().unwrap();
-        let mut file = File::create(&full_path).unwrap();
-        file.write_all(image.buffer()).unwrap();
-        self.last_screenshot = image;
-        info!("Wrote screenshot {}", &full_path.display());
-    }
-    
-    pub fn write_folder(&self) -> &PathBuf {
-        &self.write_folder
-    }
-
-    fn full_path_date_folder(&self) -> PathBuf {
-        path::absolute(PathBuf::from(&self.write_folder))
-            .unwrap()
-            .join(Self::today_directory_name())
-    }
-
-    fn today_directory_name() -> String {
-        Local::now().format("%Y-%m-%d").to_string()
-    }
-
-    fn current_time_image_filename() -> String {
-        Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png"
-    }
-
-}
-
 fn write_screenshots(path_str: String, interval: u16, count: u32, forever: bool) {
     let mut ssw = ScreenshotWriter::new(PathBuf::from(&path_str));
     let mut times_left = count;
@@ -130,13 +85,6 @@ fn write_screenshots(path_str: String, interval: u16, count: u32, forever: bool)
         }
         thread::sleep(Duration::from_secs(interval as u64));
     }
-}
-
-fn capture_screen() -> Result<Image, ImageError> {
-    let di = DisplayInfo::from_point(0, 0).unwrap();
-    let screen = Screen::new(&di);
-    let image = screen.capture().unwrap();
-    return Ok(image);
 }
 
 fn set_log_level(loglevel: &str) {
@@ -167,7 +115,8 @@ mod integration_tests {
         read_dir(folder).unwrap().count() as u32
     }
 
-    #[test] #[serial]
+    #[test]
+    #[serial]
     fn setloglevel_creates_rustlog_env_variable_if_it_doesnt_exist() {
         env::remove_var(RUST_LOG);
         assert!(env::var(RUST_LOG).is_err());
@@ -175,7 +124,8 @@ mod integration_tests {
         assert!(env::var(RUST_LOG).is_ok());
     }
 
-    #[test] #[serial]
+    #[test]
+    #[serial]
     fn setloglevel_does_not_change_rustlog_env_var_if_it_exists() {
         const EXPECTED: &str = "bingo";
         env::remove_var(RUST_LOG);
@@ -185,7 +135,8 @@ mod integration_tests {
         assert_eq!(EXPECTED, env::var(RUST_LOG).unwrap());
     }
 
-    #[test] #[serial]
+    #[test]
+    #[serial]
     fn setloglevel_sets_rust_log_env_variable_to_level() {
         const EXPECTED: &str = "warning";
         env::remove_var(RUST_LOG);
@@ -219,10 +170,12 @@ mod integration_tests {
         let tmp_dir = path::absolute(TempDir::new("scrabber").unwrap().path()).unwrap();
         fs::create_dir_all(&tmp_dir).unwrap();
         let mut ssw = ScreenshotWriter::new(PathBuf::from(&tmp_dir));
-        let filename = &PathBuf::from(ssw.full_path_date_folder().join(ScreenshotWriter::current_time_image_filename()));
+        let filename = &PathBuf::from(
+            ssw.full_path_date_folder()
+                .join(ScreenshotWriter::current_time_image_filename()),
+        );
         assert!(!&filename.exists());
         ssw.write_screenshot();
         assert!(&filename.exists());
     }
-    
 }
