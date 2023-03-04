@@ -1,7 +1,7 @@
 #![feature(absolute_path)]
 use clap::Parser;
 use ctrlc;
-use log::{debug};
+use log::debug;
 use scrabber::ScreenshotWriter;
 use std::env;
 use std::path::PathBuf;
@@ -9,18 +9,9 @@ use std::thread;
 use std::time::Duration;
 
 #[cfg(test)]
-use {
-    std::fs,
-    std::path,
-    chrono::Local,
-    serial_test::serial,
-    std::fs::read_dir,
-    tempdir::TempDir
-};
+use {chrono::Local, serial_test::serial, std::fs, std::fs::read_dir, std::path, tempdir::TempDir};
 
 const RUST_LOG: &str = "RUST_LOG";
-const DEFAULT_INTERVAL: u16 = 10;
-const DEFAULT_COUNT: u32 = 1;
 
 #[derive(Parser, Debug)]
 #[command(author, version = None)]
@@ -56,8 +47,8 @@ fn main() {
     let cli: Cli = Cli::parse();
     write_screenshots(
         cli.path.unwrap_or(String::from(".")),
-        cli.interval.unwrap_or(DEFAULT_INTERVAL),
-        cli.count.unwrap_or(DEFAULT_COUNT),
+        cli.interval.unwrap_or(10),
+        cli.count.unwrap_or(1),
         cli.forever,
     );
     debug!("Stopping screen capturing!");
@@ -90,20 +81,6 @@ fn write_screenshots(path_str: String, interval: u16, count: u32, forever: bool)
 fn set_log_level(loglevel: &str) {
     if env::var(RUST_LOG).is_err() {
         env::set_var(RUST_LOG, loglevel);
-    }
-}
-
-#[cfg(test)]
-mod unit_tests {
-    use super::*;
-
-    #[test]
-    fn sswriter_constructor_should_set_full_path_write_folder() {
-        let tmp_path = PathBuf::from("./");
-        let ssr = ScreenshotWriter::new(tmp_path.clone());
-        let expected_full_path = path::absolute(PathBuf::from(&tmp_path)).unwrap();
-        assert_ne!(tmp_path, expected_full_path);
-        assert_eq!(ssr.write_folder(), &expected_full_path);
     }
 }
 

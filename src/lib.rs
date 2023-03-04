@@ -56,5 +56,18 @@ impl ScreenshotWriter {
     pub fn current_time_image_filename() -> String {
         Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png"
     }
+}
 
+#[cfg(test)]
+mod unit_tests {
+    use super::*;
+
+    #[test]
+    fn sswriter_constructor_should_set_full_path_write_folder() {
+        let tmp_path = PathBuf::from("./");
+        let ssr = ScreenshotWriter::new(tmp_path.clone());
+        let expected_full_path = path::absolute(PathBuf::from(&tmp_path)).unwrap();
+        assert_ne!(tmp_path, expected_full_path);
+        assert_eq!(ssr.write_folder(), &expected_full_path);
+    }
 }
