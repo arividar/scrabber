@@ -97,15 +97,29 @@ impl ScreenshotWriter {
         &self.write_folder
     }
 
+    fn full_path_date_folder(&self) -> PathBuf {
+        path::absolute(PathBuf::from(&self.write_folder))
+            .unwrap()
+            .join(Self::today_directory_name())
+    }
+
+    fn today_directory_name() -> String {
+        Local::now().format("%Y-%m-%d").to_string()
+    }
+
+    fn current_time_image_filename() -> String {
+        Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png"
+    }
+
 }
 
 fn write_screenshots(path_str: String, interval: u16, count: u32, forever: bool) {
     let mut ssw = ScreenshotWriter::new(PathBuf::from(&path_str));
     let mut times_left = count;
     loop {
-        let date_folder_path = full_path_date_folder(PathBuf::from(&path_str));
+        let date_folder_path = ssw.full_path_date_folder();
         fs::create_dir_all(&date_folder_path).expect("Failed to create directory.");
-        let full_path = date_folder_path.join(current_time_image_filename());
+        let full_path = date_folder_path.join(ScreenshotWriter::current_time_image_filename());
         //let _handle = thread::spawn(move || save_screenshot(&full_path));
         ssw.write_screenshot(&full_path);
         if !forever {
@@ -116,20 +130,6 @@ fn write_screenshots(path_str: String, interval: u16, count: u32, forever: bool)
         }
         thread::sleep(Duration::from_secs(interval as u64));
     }
-}
-
-fn full_path_date_folder(p: PathBuf) -> PathBuf {
-    path::absolute(PathBuf::from(p))
-        .unwrap()
-        .join(today_directory_name())
-}
-
-fn today_directory_name() -> String {
-    Local::now().format("%Y-%m-%d").to_string()
-}
-
-fn current_time_image_filename() -> String {
-    Local::now().format("%Y-%m-%dT%H.%M.%S").to_string() + ".png"
 }
 
 fn capture_screen() -> Result<Image, ImageError> {
@@ -150,10 +150,12 @@ mod unit_tests {
     use super::*;
 
     #[test]
-    fn sswriter_new_should_set_target_folder() {
-        let tmp_path = TempDir::new("scrabber").unwrap().into_path();
+    fn sswriter_constructor_should_set_full_path_write_folder() {
+        let tmp_path = PathBuf::from("./");
         let ssr = ScreenshotWriter::new(tmp_path.clone());
-        assert_eq!(&tmp_path, ssr.write_folder());
+        let expected_full_path = path::absolute(PathBuf::from(&tmp_path)).unwrap();
+        assert_ne!(tmp_path, expected_full_path);
+        assert_eq!(ssr.write_folder(), &expected_full_path);
     }
 }
 
@@ -164,7 +166,6 @@ mod integration_tests {
     fn file_count(folder: &PathBuf) -> u32 {
         read_dir(folder).unwrap().count() as u32
     }
-
 
     #[test] #[serial]
     fn setloglevel_creates_rustlog_env_variable_if_it_doesnt_exist() {
@@ -196,14 +197,15 @@ mod integration_tests {
         let test_date_str = Local::now().format("%Y-%m-%d").to_string();
         let test_path: PathBuf = env::current_dir().unwrap();
         let expected: PathBuf = path::absolute(&test_path).unwrap().join(test_date_str);
-        assert_eq!(expected, full_path_date_folder(test_path))
+        let ssw = ScreenshotWriter::new(test_path);
+        assert_eq!(expected, ssw.full_path_date_folder())
     }
 
     #[test]
     fn param_count_two_should_create_two_screenshot_files_in_a_subdirectory() {
         let path = path::absolute(TempDir::new("scrabber").unwrap()).unwrap();
         let path_str = path.to_str().unwrap();
-        let path_day_folder = path.join(today_directory_name());
+        let path_day_folder = path.join(ScreenshotWriter::today_directory_name());
         const EXPECTED: u32 = 2;
         fs::create_dir_all(&path_str).unwrap();
         write_screenshots(String::from(path_str), 0, EXPECTED, false);
@@ -217,7 +219,7 @@ mod integration_tests {
         let tmp_dir = path::absolute(TempDir::new("scrabber").unwrap().path()).unwrap();
         fs::create_dir_all(&tmp_dir).unwrap();
         let mut ssw = ScreenshotWriter::new(PathBuf::from(&tmp_dir));
-        let filename = &PathBuf::from(&tmp_dir.join(current_time_image_filename()));
+        let filename = &PathBuf::from(&tmp_dir.join(ScreenshotWriter::current_time_image_filename()));
         assert!(!&filename.exists());
         ssw.write_screenshot(&filename);
         assert!(&filename.exists());
