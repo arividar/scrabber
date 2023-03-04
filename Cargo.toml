@@ -17,3 +17,4 @@ screenshots = { git = "https://github.com/nashaofu/screenshots-rs.git" }
 
 [dev-dependencies]
 tempdir = "0.3"
+serial_test = "1"
