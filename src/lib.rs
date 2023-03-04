@@ -9,13 +9,6 @@ use std::fs::File;
 use std::io::Write;
 use std::path::{self, PathBuf};
 
-fn capture_screen() -> Result<Image, ImageError> {
-    let di = DisplayInfo::from_point(0, 0).unwrap();
-    let screen = Screen::new(&di);
-    let image = screen.capture().unwrap();
-    return Ok(image);
-}
-
 pub struct ScreenshotWriter {
     write_folder: PathBuf,
     last_screenshot: Image,
@@ -29,10 +22,17 @@ impl ScreenshotWriter {
         }
     }
     
+    fn capture_screen() -> Result<Image, ImageError> {
+        let di = DisplayInfo::from_point(0, 0).unwrap();
+        let screen = Screen::new(&di);
+        let image = screen.capture().unwrap();
+        return Ok(image);
+    }
+
     pub fn write_screenshot(&mut self) {
         fs::create_dir_all(self.full_path_date_folder()).expect("Failed to create directory.");
         let full_path = self.full_path_date_folder().join(Self::current_time_image_filename());
-        let image = capture_screen().unwrap();
+        let image = Self::capture_screen().unwrap();
         let mut file = File::create(&full_path).unwrap();
         file.write_all(image.buffer()).unwrap();
         self.last_screenshot = image;
