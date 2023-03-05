@@ -4,17 +4,20 @@ use chrono::Local;
 use log::{info};
 use image::ImageError;
 use screenshots::{DisplayInfo, Image, Screen};
-use std::fs;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::Write;
 use std::path::{self, PathBuf};
-
+#[cfg(test)]
+use {
+    vfs::{VfsPath, MemoryFS},
+};
 pub struct ScreenshotWriter {
     write_folder: PathBuf,
     last_screenshot: Image,
 }
 
 impl ScreenshotWriter {
+
     pub fn new(folder: PathBuf) -> Self {
         return ScreenshotWriter {
             write_folder: path::absolute(PathBuf::from(&folder)).unwrap(),
@@ -69,5 +72,11 @@ mod unit_tests {
         let expected_full_path = path::absolute(PathBuf::from(&tmp_path)).unwrap();
         assert_ne!(tmp_path, expected_full_path);
         assert_eq!(ssr.write_folder(), &expected_full_path);
+    }
+
+    #[test]
+    fn test_inmemory_fs() {
+        let root: VfsPath = MemoryFS::new().into();
+        assert!(root.exists().unwrap());
     }
 }
