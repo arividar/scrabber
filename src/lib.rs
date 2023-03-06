@@ -7,10 +7,7 @@ use screenshots::{DisplayInfo, Image, Screen};
 use std::fs::{self, File};
 use std::io::Write;
 use std::path::{self, PathBuf};
-#[cfg(test)]
-use {
-    vfs::{VfsPath, MemoryFS},
-};
+
 pub struct ScreenshotWriter {
     write_folder: PathBuf,
     last_screenshot: Image,
@@ -33,8 +30,8 @@ impl ScreenshotWriter {
     }
 
     pub fn write_screenshot(&mut self) {
-        fs::create_dir_all(self.full_path_date_folder()).expect("Failed to create directory.");
-        let full_path = self.full_path_date_folder().join(Self::current_time_image_filename());
+        fs::create_dir_all(self.date_folder_path()).expect("Failed to create directory.");
+        let full_path = self.date_folder_path().join(Self::current_time_image_filename());
         let image = Self::capture_screen().unwrap();
         let mut file = File::create(&full_path).unwrap();
         file.write_all(image.buffer()).unwrap();
@@ -46,7 +43,7 @@ impl ScreenshotWriter {
         &self.write_folder
     }
 
-    pub fn full_path_date_folder(&self) -> PathBuf {
+    pub fn date_folder_path(&self) -> PathBuf {
         path::absolute(PathBuf::from(&self.write_folder))
             .unwrap()
             .join(Self::today_directory_name())
@@ -72,11 +69,5 @@ mod unit_tests {
         let expected_full_path = path::absolute(PathBuf::from(&tmp_path)).unwrap();
         assert_ne!(tmp_path, expected_full_path);
         assert_eq!(ssr.write_folder(), &expected_full_path);
-    }
-
-    #[test]
-    fn test_inmemory_fs() {
-        let root: VfsPath = MemoryFS::new().into();
-        assert!(root.exists().unwrap());
     }
 }

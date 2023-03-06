@@ -126,7 +126,7 @@ mod integration_tests {
         let test_path: PathBuf = env::current_dir().unwrap();
         let expected: PathBuf = path::absolute(&test_path).unwrap().join(test_date_str);
         let ssw = ScreenshotWriter::new(test_path);
-        assert_eq!(expected, ssw.full_path_date_folder())
+        assert_eq!(expected, ssw.date_folder_path())
     }
 
     #[test]
@@ -148,7 +148,7 @@ mod integration_tests {
         fs::create_dir_all(&tmp_dir).unwrap();
         let mut ssw = ScreenshotWriter::new(PathBuf::from(&tmp_dir));
         let filename = &PathBuf::from(
-            ssw.full_path_date_folder()
+            ssw.date_folder_path()
                 .join(ScreenshotWriter::current_time_image_filename()),
         );
         assert!(!&filename.exists());
