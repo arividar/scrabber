@@ -194,6 +194,16 @@ mod unit_tests {
         let ssw = DefaultScreenshotWriter::new(PathBuf::from("/tmp"));
         assert!(!ssw.is_image_empty(&rgba_to_screenshots_image(&image_data)));
     }
+/*
+    #[test]
+    fn sswriter_constructor_should_set_full_path_write_folder() {
+        let tmp_path = PathBuf::from("./");
+        let ssr = ScreenshotWriter::new(tmp_path.clone());
+        let expected_full_path = path::absolute(PathBuf::from(&tmp_path)).unwrap();
+        assert_ne!(tmp_path, expected_full_path);
+        assert_eq!(ssr.write_folder(), &expected_full_path);
+    }
+*/
 }
 
 #[cfg(test)]
