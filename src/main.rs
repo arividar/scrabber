@@ -45,7 +45,7 @@ fn main() {
 
     let matches = Command::new("Scrabber")
         .version("0.1.0")
-        .author("Your Name <you@example.com>")
+        .author("Ari Johannesson")
         .about("Takes screenshots at specified intervals")
         .arg(
             Arg::new("path")
@@ -54,6 +54,7 @@ fn main() {
                 .value_name("PATH")
                 .help("Sets the path to save screenshots")
                 .required(true)
+                .index(1)
                 .num_args(1),
         )
         .arg(
@@ -64,6 +65,7 @@ fn main() {
                 .help("Number of screenshots to take")
                 .value_parser(clap::value_parser!(u32))
                 .required(true)
+                .index(2)
                 .num_args(1),
         )
         .arg(
@@ -74,6 +76,7 @@ fn main() {
                 .help("Interval in seconds between screenshots")
                 .value_parser(clap::value_parser!(u64))
                 .required(true)
+                .index(3)
                 .num_args(1),
         )
         .get_matches();
