@@ -19,6 +19,14 @@ impl ScreenshotWriter {
         }
     }
     
+    fn images_are_identical(&self, new_image: &[u8]) -> bool {
+        if let Some(ref last) = self.last_screenshot {
+            last == new_image
+        } else {
+            false
+        }
+    }
+    
     fn capture_screen() -> Vec<u8> { 
         let monitors = Monitor::all().expect("Failed to get monitors list");
         
@@ -37,10 +45,16 @@ impl ScreenshotWriter {
         buffer.into_inner()
     }
 
-    pub fn write_screenshot(&mut self) {
+    pub fn write_screenshot(&mut self, skip_duplicates: bool) {
+        let image_buffer = Self::capture_screen();
+        
+        if skip_duplicates && self.images_are_identical(&image_buffer) {
+            info!("Skipping duplicate screenshot");
+            return;
+        }
+        
         fs::create_dir_all(self.date_folder_path()).expect("Failed to create directory.");
         let full_path = self.date_folder_path().join(Self::current_time_image_filename());
-        let image_buffer = Self::capture_screen();
         let mut file = File::create(&full_path).unwrap();
         file.write_all(&image_buffer).unwrap();
         self.last_screenshot = Some(image_buffer);
@@ -97,5 +111,26 @@ mod unit_tests {
         let img = result.unwrap();
         assert!(img.width() > 0, "Image width should be greater than 0");
         assert!(img.height() > 0, "Image height should be greater than 0");
+    }
+
+    #[test]
+    fn should_skip_duplicate_screenshots_when_enabled() {
+        let tmp_path = PathBuf::from("./");
+        let mut ssw = ScreenshotWriter::new(tmp_path);
+        
+        // Simulate having a previous screenshot by setting last_screenshot
+        let test_image = vec![1, 2, 3, 4, 5];
+        ssw.last_screenshot = Some(test_image.clone());
+        
+        // Test that identical images are detected
+        assert!(ssw.images_are_identical(&test_image));
+        
+        // Test that different images are not detected as identical
+        let different_image = vec![5, 4, 3, 2, 1];
+        assert!(!ssw.images_are_identical(&different_image));
+        
+        // Test with no previous screenshot
+        let new_ssw = ScreenshotWriter::new(PathBuf::from("./"));
+        assert!(!new_ssw.images_are_identical(&test_image));
     }
 }

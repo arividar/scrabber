@@ -33,4 +33,9 @@ Creates screenshot, one every minute in folder /Screenshots.
 ```
 scrabber --interval 10 --forever
 ```
-Creates screenshot, one every 10 seconds forever until stopped with Ctrl-C. 
+Creates screenshot, one every 10 seconds forever until stopped with Ctrl-C.
+
+```
+scrabber --interval 5 --skip-duplicates --forever
+```
+Creates screenshot every 5 seconds forever, but skips saving any that are identical to the previous one. 

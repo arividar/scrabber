@@ -35,6 +35,9 @@ pub struct Cli {
     /// with Ctrl-C. Overrides the count parameter.
     #[arg(short, long, action)]
     forever: bool,
+    /// If set, skip saving screenshots that are identical to the previous one
+    #[arg(long, action)]
+    skip_duplicates: bool,
 }
 
 fn main() {
@@ -49,6 +52,7 @@ fn main() {
         cli.interval.unwrap_or(10),
         cli.count.unwrap_or(1),
         cli.forever,
+        cli.skip_duplicates,
     );
     debug!("Stopping screen capturing!");
 }
@@ -61,12 +65,12 @@ fn enable_ctrl_break() {
     .expect("Ctrl-C handler failure.");
 }
 
-fn write_screenshots(path_str: String, interval: u16, count: u32, forever: bool) {
+fn write_screenshots(path_str: String, interval: u16, count: u32, forever: bool, skip_duplicates: bool) {
     let mut ssw = ScreenshotWriter::new(PathBuf::from(&path_str));
     let mut times_left = count;
     loop {
         //let _handle = thread::spawn(move || save_screenshot(&full_path));
-        ssw.write_screenshot();
+        ssw.write_screenshot(skip_duplicates);
         if !forever {
             times_left -= 1;
             if times_left < 1 {
@@ -135,7 +139,7 @@ mod integration_tests {
         let path_day_folder = path.join(ScreenshotWriter::today_directory_name());
         const EXPECTED: u32 = 2;
         fs::create_dir_all(&path_str).unwrap();
-        write_screenshots(String::from(path_str), 0, EXPECTED, false);
+        write_screenshots(String::from(path_str), 0, EXPECTED, false, false);
         assert!(&path_day_folder.is_dir());
         assert_eq!(EXPECTED, file_count(&path_day_folder));
     }
@@ -146,12 +150,19 @@ mod integration_tests {
         let tmp_dir = path::absolute(TempDir::new("scrabber").unwrap().path()).unwrap();
         fs::create_dir_all(&tmp_dir).unwrap();
         let mut ssw = ScreenshotWriter::new(PathBuf::from(&tmp_dir));
-        let filename = &PathBuf::from(
-            ssw.date_folder_path()
-                .join(ScreenshotWriter::current_time_image_filename()),
-        );
-        assert!(!&filename.exists());
-        ssw.write_screenshot();
-        assert!(&filename.exists());
+        let date_folder = ssw.date_folder_path();
+        
+        // Count files before
+        let files_before = if date_folder.exists() {
+            read_dir(&date_folder).unwrap().count()
+        } else {
+            0
+        };
+        
+        ssw.write_screenshot(false);
+        
+        // Count files after
+        let files_after = read_dir(&date_folder).unwrap().count();
+        assert_eq!(files_after, files_before + 1, "Should create exactly one new file");
     }
 }
