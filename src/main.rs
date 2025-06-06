@@ -1,4 +1,3 @@
-#![feature(absolute_path)]
 use clap::Parser;
 use ctrlc;
 use log::debug;

@@ -13,7 +13,7 @@ env_logger = "0.10.0"
 log = "0.4.17"
 rand = "0.8"
 fs = "0.0"
-screenshots = { git = "https://github.com/nashaofu/screenshots-rs.git" }
+xcap = "0.6.0"
 
 [dev-dependencies]
 tempdir = "0.3"

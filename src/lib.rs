@@ -1,16 +1,13 @@
-
-#![feature(absolute_path)]
 use chrono::Local;
 use log::{info};
-use image::ImageError;
-use screenshots::{DisplayInfo, Image, Screen};
+use xcap::Monitor;
 use std::fs::{self, File};
-use std::io::Write;
+use std::io::{Write, Cursor};
 use std::path::{self, PathBuf};
 
 pub struct ScreenshotWriter {
     write_folder: PathBuf,
-    last_screenshot: Image,
+    last_screenshot: Option<Vec<u8>>,
 }
 
 impl ScreenshotWriter {
@@ -18,24 +15,35 @@ impl ScreenshotWriter {
     pub fn new(folder: PathBuf) -> Self {
         return ScreenshotWriter {
             write_folder: path::absolute(PathBuf::from(&folder)).unwrap(),
-            last_screenshot: Image::new(0, 0, Vec::new()),
+            last_screenshot: None,
         }
     }
     
-    fn capture_screen() -> Result<Image, ImageError> {
-        let di = DisplayInfo::from_point(0, 0).unwrap();
-        let screen = Screen::new(&di);
-        let image = screen.capture().unwrap();
-        return Ok(image);
+    fn capture_screen() -> Vec<u8> { 
+        let monitors = Monitor::all().expect("Failed to get monitors list");
+        
+        let target_monitor = monitors
+            .iter() 
+            .find(|m| m.is_primary().unwrap_or(false)) 
+            .or_else(|| monitors.first()) 
+            .expect("No monitors found or primary monitor detection failed");
+
+        let image = target_monitor.capture_image().expect("Failed to capture image");
+        
+        // Use xcap's built-in PNG encoding
+        let mut buffer = Cursor::new(Vec::new());
+        image.write_to(&mut buffer, xcap::image::ImageFormat::Png)
+            .expect("Failed to encode image as PNG");
+        buffer.into_inner()
     }
 
     pub fn write_screenshot(&mut self) {
         fs::create_dir_all(self.date_folder_path()).expect("Failed to create directory.");
         let full_path = self.date_folder_path().join(Self::current_time_image_filename());
-        let image = Self::capture_screen().unwrap();
+        let image_buffer = Self::capture_screen();
         let mut file = File::create(&full_path).unwrap();
-        file.write_all(image.buffer()).unwrap();
-        self.last_screenshot = image;
+        file.write_all(&image_buffer).unwrap();
+        self.last_screenshot = Some(image_buffer);
         info!("Wrote screenshot {}", &full_path.display());
     }
     
@@ -61,6 +69,8 @@ impl ScreenshotWriter {
 #[cfg(test)]
 mod unit_tests {
     use super::*;
+    use image::ImageFormat;
+    use std::io::Cursor;
 
     #[test]
     fn sswriter_constructor_should_set_full_path_write_folder() {
@@ -69,5 +79,23 @@ mod unit_tests {
         let expected_full_path = path::absolute(PathBuf::from(&tmp_path)).unwrap();
         assert_ne!(tmp_path, expected_full_path);
         assert_eq!(ssr.write_folder(), &expected_full_path);
+    }
+
+    #[test]
+    fn captured_screenshot_should_be_valid_png() {
+        let image_buffer = ScreenshotWriter::capture_screen();
+        
+        // Verify the buffer is not empty
+        assert!(!image_buffer.is_empty(), "Screenshot buffer should not be empty");
+        
+        // Try to decode the image using the image crate
+        let cursor = Cursor::new(&image_buffer);
+        let result = image::load(cursor, ImageFormat::Png);
+        
+        assert!(result.is_ok(), "Screenshot should be a valid PNG image");
+        
+        let img = result.unwrap();
+        assert!(img.width() > 0, "Image width should be greater than 0");
+        assert!(img.height() > 0, "Image height should be greater than 0");
     }
 }
