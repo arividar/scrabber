@@ -65,7 +65,13 @@ fn enable_ctrl_break() {
     .expect("Ctrl-C handler failure.");
 }
 
-fn write_screenshots(path_str: String, interval: u16, count: u32, forever: bool, skip_duplicates: bool) {
+fn write_screenshots(
+    path_str: String,
+    interval: u16,
+    count: u32,
+    forever: bool,
+    skip_duplicates: bool,
+) {
     let mut ssw = ScreenshotWriter::new(PathBuf::from(&path_str));
     let mut times_left = count;
     loop {
@@ -151,18 +157,22 @@ mod integration_tests {
         fs::create_dir_all(&tmp_dir).unwrap();
         let mut ssw = ScreenshotWriter::new(PathBuf::from(&tmp_dir));
         let date_folder = ssw.date_folder_path();
-        
+
         // Count files before
         let files_before = if date_folder.exists() {
             read_dir(&date_folder).unwrap().count()
         } else {
             0
         };
-        
+
         ssw.write_screenshot(false);
-        
+
         // Count files after
         let files_after = read_dir(&date_folder).unwrap().count();
-        assert_eq!(files_after, files_before + 1, "Should create exactly one new file");
+        assert_eq!(
+            files_after,
+            files_before + 1,
+            "Should create exactly one new file"
+        );
     }
 }
